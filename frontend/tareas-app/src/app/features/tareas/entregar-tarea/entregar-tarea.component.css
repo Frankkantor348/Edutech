@@ -1,0 +1,13 @@
+.bg-light {
+  background-color: #f8f9fa !important;
+  border-radius: 8px;
+}
+
+.card-header {
+  border-radius: 8px 8px 0 0;
+}
+
+.badge {
+  font-size: 0.9rem;
+  padding: 5px 10px;
+}

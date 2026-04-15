@@ -1,0 +1,91 @@
+<app-navbar></app-navbar>
+
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-4">Dashboard</h1>
+    </div>
+  </div>
+  
+  <div *ngIf="loading" class="text-center mt-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+  </div>
+  
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+  
+  <!-- Dashboard Estudiante -->
+  <div *ngIf="!loading && !error && !esDocente" class="row g-3">
+    <div class="col-6 col-md-3">
+      <div class="card text-white bg-info h-100" style="cursor: pointer;" (click)="irATareas('pendiente')">
+        <div class="card-body text-center">
+          <h2 class="display-6">{{ tareasPendientes }}</h2>
+          <p class="mb-0">Pendientes</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-white bg-warning h-100" style="cursor: pointer;" (click)="irATareas('entregada')">
+        <div class="card-body text-center">
+          <h2 class="display-6">{{ tareasEntregadas }}</h2>
+          <p class="mb-0">Entregadas</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-white bg-success h-100" style="cursor: pointer;" (click)="irATareas('calificada')">
+        <div class="card-body text-center">
+          <h2 class="display-6">{{ tareasCalificadas }}</h2>
+          <p class="mb-0">Calificadas</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-white bg-danger h-100" style="cursor: pointer;" (click)="irATareas('vencida')">
+        <div class="card-body text-center">
+          <h2 class="display-6">{{ tareasVencidas }}</h2>
+          <p class="mb-0">Vencidas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Dashboard Docente -->
+  <div *ngIf="!loading && !error && esDocente" class="row g-3">
+    <div class="col-6 col-md-3">
+      <div class="card text-white bg-primary h-100" style="cursor: pointer;" (click)="irATareas('publicadas')">
+        <div class="card-body text-center">
+          <h2 class="display-6">{{ totalTareasPublicadas }}</h2>
+          <p class="mb-0">Tareas Publicadas</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-white bg-warning h-100" style="cursor: pointer;" (click)="irATareas('pendientes')">
+        <div class="card-body text-center">
+          <h2 class="display-6">{{ totalEntregasPendientes }}</h2>
+          <p class="mb-0">Entregas Pendientes</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-white bg-success h-100" style="cursor: pointer;" (click)="irATareas('calificadas')">
+        <div class="card-body text-center">
+          <h2 class="display-6">{{ totalEntregasCalificadas }}</h2>
+          <p class="mb-0">Entregas Calificadas</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-white bg-info h-100" style="cursor: pointer;" (click)="irATareas('estudiantes')">
+        <div class="card-body text-center">
+          <h2 class="display-6">{{ totalEstudiantes }}</h2>
+          <p class="mb-0">Estudiantes</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,55 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white text-center">
+          <!-- Logo y nombre de la aplicación -->
+          <i class="bi bi-mortarboard fs-1"></i>
+          <h2 class="mb-0">EduTech</h2>
+          <p class="mb-0 small">Iniciar Sesión</p>
+        </div>
+        <div class="card-body">
+          <div *ngIf="errorMessage" class="alert alert-danger">
+            {{ errorMessage }}
+          </div>
+          
+          <form (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input 
+                type="email" 
+                class="form-control" 
+                [(ngModel)]="email" 
+                name="email"
+                required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Contraseña</label>
+              <input 
+                type="password" 
+                class="form-control" 
+                [(ngModel)]="password" 
+                name="password"
+                required>
+            </div>
+            
+            <button 
+              type="submit" 
+              class="btn btn-primary w-100"
+              [disabled]="loading">
+              {{ loading ? 'Ingresando...' : 'Iniciar Sesión' }}
+            </button>
+          </form>
+          
+          <!-- Enlace a la página de registro -->
+          <div class="text-center mt-3">
+            <a routerLink="/register" class="text-decoration-none">
+              ¿No tienes cuenta? Regístrate aquí
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

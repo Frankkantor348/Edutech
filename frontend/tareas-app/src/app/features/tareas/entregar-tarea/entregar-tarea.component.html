@@ -1,0 +1,55 @@
+<app-navbar></app-navbar>
+
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-success text-white">
+          <h3 class="mb-0">📤 Entregar Tarea</h3>
+        </div>
+        <div class="card-body">
+          
+          <!-- Información de la tarea -->
+          <div class="mb-4 p-3 bg-light rounded">
+            <h4 class="mb-3">{{ tarea.titulo }}</h4>
+            <p class="mb-2">{{ tarea.descripcion }}</p>
+            <hr>
+            <div class="row">
+              <div class="col-6">
+                <strong>📚 Curso:</strong> {{ tarea.curso || 'Sin curso' }}
+              </div>
+              <div class="col-6">
+                <strong>📅 Fecha límite:</strong> {{ tarea.fechaLimite | date:'dd/MM/yyyy' }}
+              </div>
+            </div>
+          </div>
+          
+          <!-- Mensajes -->
+          <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+          <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+          
+          <!-- Formulario -->
+          <form (ngSubmit)="entregar()" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Comentario (opcional)</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="comentario" name="comentario"></textarea>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">Archivo de entrega *</label>
+              <input type="file" class="form-control" (change)="onFileSelected($event)" required>
+              <small class="text-muted">Formatos: PDF, DOC, DOCX, JPG, PNG, ZIP, TXT (Max 10MB)</small>
+            </div>
+            
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-success" [disabled]="loading">
+                {{ loading ? '⏳ Entregando...' : '📤 Entregar Tarea' }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="cancelar()">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

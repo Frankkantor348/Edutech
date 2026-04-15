@@ -1,0 +1,10 @@
+input[type="file"] {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.badge {
+  font-size: 0.9rem;
+  padding: 5px 10px;
+}

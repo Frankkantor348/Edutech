@@ -1,0 +1,26 @@
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+  /* Botón de cerrar sesión más pequeño */
+  .btn-outline-light {
+    padding: 4px 8px;
+    font-size: 12px;
+    width: 100%;
+    margin-top: 5px;
+  }
+  
+  /* Enlaces del menú más compactos */
+  .nav-link {
+    padding: 6px 12px !important;
+    font-size: 14px;
+  }
+  
+  /* Logo más pequeño */
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+  
+  /* Espaciado entre elementos del menú */
+  .navbar-nav {
+    gap: 5px;
+  }
+}

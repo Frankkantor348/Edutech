@@ -1,0 +1,107 @@
+<app-navbar></app-navbar>
+
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">{{ esEdicion ? 'Editar Tarea' : 'Nueva Tarea' }}</h3>
+        </div>
+        <div class="card-body">
+          <div *ngIf="error" class="alert alert-danger">
+            {{ error }}
+          </div>
+          
+          <div *ngIf="loading" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando datos...</p>
+          </div>
+          
+          <form *ngIf="!loading" (ngSubmit)="guardar()" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Título *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="tarea.titulo" 
+                name="titulo"
+                required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">Descripción *</label>
+              <textarea 
+                class="form-control" 
+                rows="4" 
+                [(ngModel)]="tarea.descripcion" 
+                name="descripcion"
+                required></textarea>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">Curso</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="tarea.curso" 
+                name="curso">
+            </div>
+            
+            <!-- ✅ Selector de Asignatura -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">📚 Asignatura</label>
+              <select 
+                class="form-control" 
+                [(ngModel)]="tarea.asignaturaId" 
+                name="asignaturaId">
+                <option [ngValue]="null">-- Seleccionar asignatura --</option>
+                <option *ngFor="let asig of asignaturas" [ngValue]="asig.id">
+                  {{ asig.nombre }}
+                </option>
+              </select>
+              <small class="text-muted" *ngIf="cargandoAsignaturas">Cargando asignaturas...</small>
+              <small class="text-muted" *ngIf="!cargandoAsignaturas && asignaturas.length === 0">
+                No hay asignaturas. Crea una desde el perfil o contacta al administrador.
+              </small>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">📅 Fecha Límite *</label>
+              <input 
+                type="date" 
+                class="form-control" 
+                [(ngModel)]="tarea.fechaLimite" 
+                name="fechaLimite"
+                required>
+            </div>
+            
+            <!-- Campo para subir archivo -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">📎 Material de apoyo (opcional)</label>
+              <input 
+                type="file" 
+                class="form-control" 
+                (change)="onFileSelected($event)"
+                accept=".pdf,.doc,.docx,.jpg,.png,.zip">
+              <small class="text-muted">Formatos permitidos: PDF, DOC, DOCX, JPG, PNG, ZIP (Max 10MB)</small>
+              <div *ngIf="archivoSeleccionado" class="mt-2">
+                <span class="badge bg-info">Archivo seleccionado: {{ archivoSeleccionado.name }}</span>
+              </div>
+            </div>
+            
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="loading">
+                {{ loading ? 'Guardando...' : 'Guardar' }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="cancelar()">
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

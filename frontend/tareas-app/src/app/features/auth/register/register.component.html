@@ -1,0 +1,60 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white text-center">
+          <!-- Logo y nombre de la aplicación -->
+          <i class="bi bi-mortarboard fs-1"></i>
+          <h2 class="mb-0">EduTech</h2>
+          <p class="mb-0 small">Crear una cuenta</p>
+        </div>
+        <div class="card-body">
+          <div *ngIf="errorMessage" class="alert alert-danger">
+            {{ errorMessage }}
+          </div>
+          <div *ngIf="successMessage" class="alert alert-success">
+            {{ successMessage }}
+          </div>
+          
+          <form (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label class="form-label">Email *</label>
+              <input type="email" class="form-control" [(ngModel)]="email" name="email" required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Teléfono</label>
+              <input type="tel" class="form-control" [(ngModel)]="telefono" name="telefono">
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Contraseña *</label>
+              <input type="password" class="form-control" [(ngModel)]="password" name="password" required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Confirmar Contraseña *</label>
+              <input type="password" class="form-control" [(ngModel)]="confirmPassword" name="confirmPassword" required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Rol</label>
+              <select class="form-control" [(ngModel)]="rol" name="rol">
+                <option value="Estudiante">Estudiante</option>
+                <option value="Docente">Docente</option>
+              </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100" [disabled]="loading">
+              {{ loading ? 'Registrando...' : 'Registrarse' }}
+            </button>
+          </form>
+          
+          <div class="text-center mt-3">
+            <a routerLink="/login">¿Ya tienes cuenta? Inicia sesión</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,99 @@
+<app-navbar></app-navbar>
+
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">Mi Perfil</h3>
+        </div>
+        <div class="card-body">
+          
+          <!-- Loading -->
+          <div *ngIf="loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando datos...</p>
+          </div>
+          
+          <!-- Mensajes -->
+          <div *ngIf="errorMessage" class="alert alert-danger">
+            {{ errorMessage }}
+          </div>
+          <div *ngIf="successMessage" class="alert alert-success">
+            {{ successMessage }}
+          </div>
+          
+          <!-- Modo visualización -->
+          <div *ngIf="!loading && !editMode">
+            <!-- ✅ Email (solo lectura) -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">📧 Correo Electrónico</label>
+              <p class="form-control-plaintext">{{ perfil.email }}</p>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">👤 Nombre</label>
+              <p class="form-control-plaintext">{{ perfil.nombre || 'No registrado' }}</p>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">📞 Teléfono</label>
+              <p class="form-control-plaintext">{{ perfil.telefono || 'No registrado' }}</p>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">🎓 Rol</label>
+              <p class="form-control-plaintext">
+                <span class="badge" [ngClass]="perfil.rol === 'Docente' ? 'bg-primary' : 'bg-success'">
+                  {{ perfil.rol }}
+                </span>
+              </p>
+            </div>
+            
+            <button class="btn btn-primary w-100" (click)="toggleEdit()">
+              ✏️ Editar Perfil
+            </button>
+          </div>
+          
+          <!-- Modo edición -->
+          <div *ngIf="!loading && editMode">
+            <form (ngSubmit)="guardar()">
+              <!-- ✅ Email (solo lectura, no editable) -->
+              <div class="mb-3">
+                <label class="form-label fw-bold">📧 Correo Electrónico</label>
+                <input type="email" class="form-control" [value]="perfil.email" disabled>
+                <small class="text-muted">El correo no se puede modificar</small>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">👤 Nombre</label>
+                <input type="text" class="form-control" [(ngModel)]="perfil.nombre" name="nombre" placeholder="Tu nombre completo">
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">📞 Teléfono</label>
+                <input type="tel" class="form-control" [(ngModel)]="perfil.telefono" name="telefono" placeholder="Ej: 3001234567">
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">🎓 Rol</label>
+                <input type="text" class="form-control" [value]="perfil.rol" disabled>
+              </div>
+              
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success" [disabled]="saving">
+                  {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
+                </button>
+                <button type="button" class="btn btn-secondary" (click)="toggleEdit()">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
