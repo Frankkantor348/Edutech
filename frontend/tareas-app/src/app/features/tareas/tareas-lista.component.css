@@ -1,7 +1,59 @@
+/* Título de página */
+.page-title {
+  font-size: 1.74rem; /* ≈28px */
+  font-weight: 600;
+  margin: 0; /* elimina márgenes extra de h1 */
+}
+
+/* Botón + Nueva Tarea */
+.btn-nueva-tarea {
+  font-size: 1.05rem; /* ≈17px */
+  font-weight: 600;
+  padding: 0.5rem 1rem; /* tamaño cómodo */
+}
+
+
 .card {
   transition: transform 0.3s;
 }
+
+.card-title {
+  font-size: 1.3rem; /*20-22px*/
+  font-weight: 500; /*Medium*/
+}
+
 .card:hover {
   transform: translateY(-5px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.descripcion-tarea {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* línea sutil */
+  padding-bottom: 0.5rem; /* espacio antes de la línea */
+  margin-bottom: 1rem; /* separación del bloque siguiente */
+}
+
+/* Texto descriptivo de la tarea */
+.descripcion-tarea p {
+  font-size: 1rem;       /* ≈16px */
+  font-weight: 400;      /* Regular */
+  color: #464646;           /* Menos protagonismo */
+  margin-bottom: 0;      /* Limpieza */
+}
+
+/* Subtítulos dentro del detalle de la tarea */
+.card-body strong {
+  font-size: 1rem;     /* ≈16-17px */
+  font-weight: 600;      /* Semibold */
+}
+
+.badge {
+  font-size: 0.9rem; /*14px*/
+  font-weight: 500; /*Medium*/
+}
+
+/* Botones de acción dentro de la card */
+.card-footer .btn {
+  font-size: 0.95rem; /*14px*/
+  font-weight: 600;
 }

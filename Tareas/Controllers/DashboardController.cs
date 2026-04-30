@@ -166,10 +166,10 @@ namespace Tareas.Controllers.Api
                     Value = g.Count(),
                     Color = g.Key switch
                     {
-                        "verde" => "#28a745",
-                        "amarillo" => "#ffc107",
-                        "rojo" => "#dc3545",
-                        _ => "#6c757d"
+                        "verde" => "#70D82F",
+                        "amarillo" => "#FCC735",
+                        "rojo" => "#B71C20",
+                        _ => "#646464"
                     }
                 }).ToList();
 
@@ -222,7 +222,7 @@ namespace Tareas.Controllers.Api
                 TotalEntregas = await _context.Entregas.CountAsync(),
                 EntregasPendientes = await _context.Entregas.CountAsync(e => e.Calificacion == null),
                 EntregasCalificadas = await _context.Entregas.CountAsync(e => e.Calificacion != null),
-                TareasPorEstado = tareasPorEstado.Any() ? tareasPorEstado : new List<ChartDataResponse> { new ChartDataResponse { Label = "Sin tareas", Value = 1, Color = "#6c757d" } },
+                TareasPorEstado = tareasPorEstado.Any() ? tareasPorEstado : new List<ChartDataResponse> { new ChartDataResponse { Label = "Sin tareas", Value = 1, Color = "#646464" } },
                 EntregasPorDia = entregasPorDia,
                 CalificacionesPromedioPorCurso = calificacionesPorCurso.Any() ? calificacionesPorCurso : new List<ChartDataResponse> { new ChartDataResponse { Label = "Sin datos", Value = 0, Color = "#6c757d" } }
             };
@@ -231,7 +231,7 @@ namespace Tareas.Controllers.Api
         private string ObtenerColorAleatorio()
         {
             var random = new Random();
-            var colores = new[] { "#007bff", "#28a745", "#ffc107", "#17a2b8", "#6610f2", "#e83e8c", "#fd7e14" };
+            var colores = new[] { "#007bff", "#3A9B17", "#FCC735", "#66BEFF", "#230D60", "#0046B7", "#1869B7" };
             return colores[random.Next(colores.Length)];
         }
     }

@@ -170,7 +170,7 @@ export class TareasListaComponent implements OnInit {
   // ✅ MÉTODO PARA ELIMINAR TAREA CON NOTIFICACIÓN TOAST
   eliminarTarea(tarea: Tarea) {
     if (confirm(`¿Eliminar la tarea "${tarea.titulo}"? Esta acción no se puede deshacer. Se eliminarán también todas las entregas asociadas.`)) {
-      console.log(`🗑️ Eliminando tarea ID: ${tarea.id}`);
+      console.log(`Eliminando tarea ID: ${tarea.id}`);
       this.http.delete(`${environment.apiUrl}/TareasApi/${tarea.id}`).subscribe({
         next: () => {
           console.log('✅ Tarea eliminada exitosamente');

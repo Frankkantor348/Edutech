@@ -22,8 +22,8 @@
   <div *ngIf="!loading && !error">
     
     <!-- Mensaje de información -->
-    <div class="alert alert-info">
-      <strong>📊 Total de entregas:</strong> {{ entregas.length }}
+    <div class="alert alert-info total-entregas">
+      <strong>Total de entregas:</strong> {{ entregas.length }}
     </div>
 
     <!-- Tarjetas de entregas -->
@@ -35,15 +35,15 @@
           </div>
           <div class="card-body">
             <div class="mb-2">
-              <strong>👨‍🎓 Estudiante:</strong>
+              <strong>Estudiante:</strong>
               <span class="badge bg-info ms-2">{{ entrega.nombreEstudiante }}</span>
             </div>
             <div class="mb-2">
-              <strong>📅 Fecha Entrega:</strong>
+              <strong>Fecha Entrega:</strong>
               {{ entrega.fechaEntrega | date:'dd/MM/yyyy HH:mm' }}
             </div>
             <div class="mb-2">
-              <strong>💬 Comentario:</strong>
+              <strong>Comentario:</strong>
               <p class="text-muted mb-0">{{ entrega.comentarioEstudiante || 'Sin comentario' }}</p>
             </div>
             <div class="mb-2">
@@ -54,16 +54,16 @@
               <span *ngIf="!entrega.calificacion && entrega.calificacion !== 0" class="badge bg-warning">Pendiente</span>
             </div>
             <div class="mb-2" *ngIf="entrega.retroalimentacionDocente">
-              <strong>📝 Retroalimentación:</strong>
+              <strong>Retroalimentación:</strong>
               <p class="text-muted mb-0">{{ entrega.retroalimentacionDocente }}</p>
             </div>
           </div>
           <div class="card-footer bg-transparent d-flex gap-2">
             <button *ngIf="entrega.rutaArchivo" class="btn btn-outline-info btn-sm flex-grow-1" (click)="descargarArchivo(entrega)">
-              📎 Descargar
+              <i class="bi bi-paperclip"></i> Descargar
             </button>
             <button class="btn btn-outline-primary btn-sm flex-grow-1" (click)="abrirModal(entrega)">
-              ✏️ Calificar
+              Calificar
             </button>
           </div>
         </div>
