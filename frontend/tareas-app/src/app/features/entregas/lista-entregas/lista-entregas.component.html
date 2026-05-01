@@ -39,22 +39,22 @@
               <span class="badge bg-info ms-2">{{ entrega.nombreEstudiante }}</span>
             </div>
             <div class="mb-2">
-              <strong>Fecha Entrega:</strong>
+              <strong><i class="bi bi-calendar-week" style="color:#1869B7"></i> Fecha Entrega:</strong>
               {{ entrega.fechaEntrega | date:'dd/MM/yyyy HH:mm' }}
             </div>
             <div class="mb-2">
-              <strong>Comentario:</strong>
+              <strong><i class="bi bi-chat-text" style="color:#646464"></i> Comentario:</strong>
               <p class="text-muted mb-0">{{ entrega.comentarioEstudiante || 'Sin comentario' }}</p>
             </div>
             <div class="mb-2">
-              <strong>⭐ Calificación:</strong>
+              <strong><i class="bi bi-star-fill" style="color:#FCC735"></i> Calificación:</strong>
               <span *ngIf="entrega.calificacion !== null && entrega.calificacion !== undefined" class="badge bg-success">
                 {{ entrega.calificacion }}/10
               </span>
               <span *ngIf="!entrega.calificacion && entrega.calificacion !== 0" class="badge bg-warning">Pendiente</span>
             </div>
             <div class="mb-2" *ngIf="entrega.retroalimentacionDocente">
-              <strong>Retroalimentación:</strong>
+              <strong><i class="bi bi-chat-square-dots" style="color:#646464"></i> Retroalimentación:</strong>
               <p class="text-muted mb-0">{{ entrega.retroalimentacionDocente }}</p>
             </div>
           </div>
@@ -63,7 +63,7 @@
               <i class="bi bi-paperclip"></i> Descargar
             </button>
             <button class="btn btn-outline-primary btn-sm flex-grow-1" (click)="abrirModal(entrega)">
-              Calificar
+              <i class="bi bi-pencil"></i> Calificar
             </button>
           </div>
         </div>

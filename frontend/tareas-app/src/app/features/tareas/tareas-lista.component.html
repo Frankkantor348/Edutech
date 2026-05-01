@@ -61,18 +61,18 @@
             <div class="mb-2" *ngIf="tarea.entregada">
               <strong>Fecha de entrega:</strong>
               {{ tarea.fechaEntrega | date: 'dd/MM/yyyy HH:mm' }}
-              <span class="badge bg-success ms-2">
-                {{ tarea.calificacion ? 'ENTREGADA' : 'VIGENTE' }}
+              <span class="badge bg-success ms-1">
+                {{ tarea.calificacion ? 'Entregada' : 'Vigente' }}
               </span>
             </div>
 
             <!-- Si NO entregó: mostrar fecha límite -->
             <div class="mb-2" *ngIf="!tarea.entregada">
-              <strong>Fecha límite:</strong>
+              <strong><i class="bi bi-calendar-event" style="color:#1869B7"></i> Fecha límite:</strong>
               <span [ngClass]="{ 'text-danger': isVencida(tarea.fechaLimite) }">
                 {{ tarea.fechaLimite | date: 'dd/MM/yyyy' }}
               </span>
-              <span *ngIf="isVencida(tarea.fechaLimite)" class="badge bg-danger ms-2">VENCIDA</span>
+              <span *ngIf="isVencida(tarea.fechaLimite)" class="badge bg-danger ms-2">Vencida</span>
             </div>
 
             <!-- Estado -->
@@ -90,7 +90,7 @@
                 "
               >
                 {{
-                  tarea.entregada ? (tarea.calificacion ? 'Calificada' : 'entregada') : 'Pendiente'
+                  tarea.entregada ? (tarea.calificacion ? 'Calificada' : 'Entregada') : 'Pendiente'
                 }}
               </span>
             </div>
@@ -102,7 +102,7 @@
           <ng-container *ngIf="esDocente">
             <!-- Fecha límite -->
             <div class="mb-2">
-              <strong>Fecha límite:</strong>
+              <strong><i class="bi bi-calendar-event" style="color:#1869B7"></i> Fecha límite:</strong>
               <span> {{ tarea.fechaLimite | date: 'dd/MM/yyyy' }}</span>
             </div>
 
@@ -150,12 +150,12 @@
 
           <!-- Calificación para estudiante -->
           <div *ngIf="!esDocente && tarea.calificacion" class="mt-3">
-            <strong>⭐ Calificación:</strong> {{ tarea.calificacion }}/10
+            <strong><i class="bi bi-star-fill" style="color:#FCC735"></i> Calificación:</strong> {{ tarea.calificacion }}/10
           </div>
 
           <!-- Retroalimentación para estudiante -->
           <div *ngIf="!esDocente && tarea.retroalimentacion" class="mt-2 p-2 bg-light rounded">
-            <strong>📝 Retroalimentación del docente:</strong>
+            <strong><i class="bi bi-chat-square-text"></i> Retroalimentación del docente:</strong>
             <p class="mb-0 mt-1">{{ tarea.retroalimentacion }}</p>
           </div>
         </div>
@@ -166,19 +166,19 @@
             <button
               class="btn btn-outline-primary btn-sm flex-grow-1"
               (click)="verDetalle(tarea.id)"
-            >
-              Editar
+            ><i class="bi bi-pencil"></i>
+               Editar
             </button>
             <button
               class="btn btn-outline-danger btn-sm flex-grow-1"
               (click)="eliminarTarea(tarea)"
-            >
+            ><i class="bi bi-trash"></i>
               Eliminar
             </button>
             <button
               class="btn btn-outline-success btn-sm flex-grow-1"
               (click)="verEntregas(tarea.id)"
-            >
+            ><i class="bi bi-eye"></i>
               Ver Entregas
             </button>
           </div>
@@ -189,20 +189,20 @@
             class="btn btn-outline-success btn-sm w-100"
             (click)="entregarTarea(tarea.id)"
           >
-            📤 Entregar Tarea
+            <i class="bi bi-upload"></i> Entregar Tarea
           </button>
 
           <!-- Mensaje de tarea vencida (estudiante) -->
           <div
             *ngIf="!esDocente && !tarea.entregada && isVencida(tarea.fechaLimite)"
-            class="text-center text-danger small"
+            class="text-center text-danger small tarea-vencida"
           >
             ⏰ Tarea vencida - No se puede entregar
           </div>
 
           <!-- Mensaje de tarea entregada (estudiante) -->
-          <div *ngIf="!esDocente && tarea.entregada" class="text-center text-success small">
-            ✅ Tarea entregada
+          <div *ngIf="!esDocente && tarea.entregada" class="text-center text-success small tarea-entregada">
+            <i class="bi bi-check-square"></i> Tarea entregada
           </div>
         </div>
       </div>

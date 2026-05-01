@@ -29,22 +29,22 @@
           <div *ngIf="!loading && !editMode">
             <!-- ✅ Email (solo lectura) -->
             <div class="mb-3">
-              <label class="form-label fw-bold">Correo Electrónico</label>
+              <label class="form-label fw-bold"><i class="bi bi-envelope-fill"></i> Correo Electrónico</label>
               <p class="form-control-plaintext">{{ perfil.email }}</p>
             </div>
             
             <div class="mb-3">
-              <label class="form-label fw-bold">Nombre</label>
+              <label class="form-label fw-bold"><i class="bi bi-person-fill"></i> Nombre</label>
               <p class="form-control-plaintext">{{ perfil.nombre || 'No registrado' }}</p>
             </div>
             
             <div class="mb-3">
-              <label class="form-label fw-bold">Teléfono</label>
+              <label class="form-label fw-bold"><i class="bi bi-telephone-fill"></i> Teléfono</label>
               <p class="form-control-plaintext">{{ perfil.telefono || 'No registrado' }}</p>
             </div>
             
             <div class="mb-3">
-              <label class="form-label fw-bold">Rol</label>
+              <label class="form-label fw-bold"><i class="bi bi-person-badge-fill"></i> Rol</label>
               <p class="form-control-plaintext">
                 <span class="badge" [ngClass]="perfil.rol === 'Docente' ? 'bg-primary' : 'bg-success'">
                   {{ perfil.rol }}
@@ -53,7 +53,7 @@
             </div>
             
             <button class="btn btn-primary w-100" (click)="toggleEdit()">
-              ✏️ Editar Perfil
+              <i class="bi bi-pencil"></i> Editar Perfil
             </button>
           </div>
           
@@ -62,23 +62,23 @@
             <form (ngSubmit)="guardar()">
               <!-- ✅ Email (solo lectura, no editable) -->
               <div class="mb-3">
-                <label class="form-label fw-bold">Correo Electrónico</label>
+                <label class="form-label fw-bold"><i class="bi bi-envelope-fill"></i> Correo Electrónico</label>
                 <input type="email" class="form-control" [value]="perfil.email" disabled>
                 <small class="text-muted">El correo no se puede modificar</small>
               </div>
               
               <div class="mb-3">
-                <label class="form-label fw-bold">Nombre</label>
+                <label class="form-label fw-bold"><i class="bi bi-person-fill"></i> Nombre</label>
                 <input type="text" class="form-control" [(ngModel)]="perfil.nombre" name="nombre" placeholder="Tu nombre completo">
               </div>
               
               <div class="mb-3">
-                <label class="form-label fw-bold">Teléfono</label>
+                <label class="form-label fw-bold"><i class="bi bi-telephone-fill"></i> Teléfono</label>
                 <input type="tel" class="form-control" [(ngModel)]="perfil.telefono" name="telefono" placeholder="Ej: 3001234567">
               </div>
               
               <div class="mb-3">
-                <label class="form-label fw-bold">Rol</label>
+                <label class="form-label fw-bold"><i class="bi bi-person-badge-fill"></i> Rol</label>
                 <input type="text" class="form-control" [value]="perfil.rol" disabled>
               </div>
               
