@@ -59,7 +59,7 @@
           <ng-container *ngIf="!esDocente">
             <!-- Si ya entregó: mostrar fecha de entrega -->
             <div class="mb-2" *ngIf="tarea.entregada">
-              <strong>Fecha de entrega:</strong>
+              <strong><i class="bi bi-calendar-event" style="color:#1869B7"></i> Fecha de entrega:</strong>
               {{ tarea.fechaEntrega | date: 'dd/MM/yyyy HH:mm' }}
               <span class="badge bg-success ms-1">
                 {{ tarea.calificacion ? 'Entregada' : 'Vigente' }}
