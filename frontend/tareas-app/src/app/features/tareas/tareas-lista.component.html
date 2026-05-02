@@ -2,160 +2,213 @@
 
 <div class="container mt-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Mis Tareas</h1>
-    <button *ngIf="esDocente" class="btn btn-primary" (click)="crearTarea()">
+    <h1 class="page-title">Mis Tareas</h1>
+    <button *ngIf="esDocente" class="btn btn-primary btn-nueva-tarea" (click)="crearTarea()">
       + Nueva Tarea
     </button>
   </div>
-  
+
   <div *ngIf="loading" class="text-center mt-5">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando...</span>
     </div>
     <p class="mt-2">Cargando tareas...</p>
   </div>
-  
+
   <div *ngIf="error" class="alert alert-danger">
     {{ error }}
   </div>
-  
+
   <div *ngIf="!loading && !error" class="row">
     <!-- ✅ CAMBIADO: tareas por tareasFiltradas -->
     <div class="col-md-6 col-lg-4 mb-4" *ngFor="let tarea of tareasFiltradas">
       <div class="card h-100 shadow-sm">
-        <div class="card-header" [ngClass]="'bg-' + (tarea.colorSemaforo === 'verde' ? 'success' : (tarea.colorSemaforo === 'amarillo' ? 'warning' : 'danger')) + ' text-white'">
+        <div
+          class="card-header"
+          [ngClass]="
+            'bg-' +
+            (tarea.colorSemaforo === 'verde'
+              ? 'success'
+              : tarea.colorSemaforo === 'amarillo'
+                ? 'warning'
+                : 'danger') +
+            ' text-white'
+          "
+        >
           <h5 class="card-title mb-0">{{ tarea.titulo }}</h5>
         </div>
         <div class="card-body">
-          <p class="card-text">{{ tarea.descripcion }}</p>
-          
-          <div class="mb-2">
-            <strong>Curso:</strong> {{ tarea.curso || 'Sin curso' }}
+          <div class="descripcion-tarea mb-3 pb-2 border-bottom">
+            <p class="card-text mb-0">{{ tarea.descripcion }}</p>
           </div>
-          
+          <div class="mb-2"><strong>Curso:</strong> {{ tarea.curso || 'Sin curso' }}</div>
+
           <!-- Asignatura -->
           <div class="mb-2" *ngIf="tarea.asignatura">
-            <strong>📚 Asignatura:</strong>
+            <strong>Asignatura:</strong>
             <span class="badge bg-info ms-1">{{ tarea.asignatura.nombre }}</span>
           </div>
           <div class="mb-2" *ngIf="!tarea.asignatura">
-            <strong>📚 Asignatura:</strong>
+            <strong>Asignatura:</strong>
             <span class="badge bg-secondary ms-1">Sin asignatura</span>
           </div>
-          
+
           <!-- ========================================== -->
           <!-- VISTA ESTUDIANTE -->
           <!-- ========================================== -->
           <ng-container *ngIf="!esDocente">
             <!-- Si ya entregó: mostrar fecha de entrega -->
             <div class="mb-2" *ngIf="tarea.entregada">
-              <strong>📅 Fecha de entrega:</strong> 
-              {{ tarea.fechaEntrega | date:'dd/MM/yyyy HH:mm' }}
-              <span class="badge bg-success ms-2">
-                {{ tarea.calificacion ? 'CALIFICADA' : 'ENTREGADA' }}
+              <strong><i class="bi bi-calendar-event" style="color:#1869B7"></i> Fecha de entrega:</strong>
+              {{ tarea.fechaEntrega | date: 'dd/MM/yyyy HH:mm' }}
+              <span class="badge bg-success ms-1">
+                {{ tarea.calificacion ? 'Entregada' : 'Vigente' }}
               </span>
             </div>
-            
+
             <!-- Si NO entregó: mostrar fecha límite -->
             <div class="mb-2" *ngIf="!tarea.entregada">
-              <strong>Fecha límite:</strong> 
-              <span [ngClass]="{'text-danger': isVencida(tarea.fechaLimite)}">
-                {{ tarea.fechaLimite | date:'dd/MM/yyyy' }}
+              <strong><i class="bi bi-calendar-event" style="color:#1869B7"></i> Fecha límite:</strong>
+              <span [ngClass]="{ 'text-danger': isVencida(tarea.fechaLimite) }">
+                {{ tarea.fechaLimite | date: 'dd/MM/yyyy' }}
               </span>
-              <span *ngIf="isVencida(tarea.fechaLimite)" class="badge bg-danger ms-2">VENCIDA</span>
+              <span *ngIf="isVencida(tarea.fechaLimite)" class="badge bg-danger ms-2">Vencida</span>
             </div>
-            
+
             <!-- Estado -->
             <div class="mb-2">
               <strong>Estado:</strong>
-              <span class="badge" [ngClass]="'bg-' + (tarea.colorSemaforo === 'verde' ? 'success' : (tarea.colorSemaforo === 'amarillo' ? 'warning' : 'danger'))">
-                {{ tarea.entregada ? (tarea.calificacion ? 'Calificada' : 'Entregada') : 'Pendiente' }}
+              <span
+                class="badge"
+                [ngClass]="
+                  'bg-' +
+                  (tarea.colorSemaforo === 'verde'
+                    ? 'success'
+                    : tarea.colorSemaforo === 'amarillo'
+                      ? 'warning'
+                      : 'danger')
+                "
+              >
+                {{
+                  tarea.entregada ? (tarea.calificacion ? 'Calificada' : 'Entregada') : 'Pendiente'
+                }}
               </span>
             </div>
           </ng-container>
-          
+
           <!-- ========================================== -->
           <!-- VISTA DOCENTE -->
           <!-- ========================================== -->
           <ng-container *ngIf="esDocente">
             <!-- Fecha límite -->
             <div class="mb-2">
-              <strong>Fecha límite:</strong> 
-              <span>{{ tarea.fechaLimite | date:'dd/MM/yyyy' }}</span>
+              <strong><i class="bi bi-calendar-event" style="color:#1869B7"></i> Fecha límite:</strong>
+              <span> {{ tarea.fechaLimite | date: 'dd/MM/yyyy' }}</span>
             </div>
-            
+
             <!-- Resumen de entregas -->
             <div class="mb-2">
-              <strong>📊 Entregas:</strong>
-              <span *ngIf="tarea.entregasCalificadas && tarea.entregasCalificadas > 0" class="badge bg-success ms-1">
-                {{ tarea.entregasCalificadas }} calificadas
+              <strong>Entregas:</strong>
+              <span
+                *ngIf="tarea.entregasCalificadas && tarea.entregasCalificadas > 0"
+                class="badge bg-success ms-1"
+              >
+                Calificada
               </span>
-              <span *ngIf="tarea.totalEntregas && tarea.totalEntregas > 0 && (!tarea.entregasCalificadas || tarea.entregasCalificadas === 0)" class="badge bg-warning ms-1">
-                {{ tarea.totalEntregas }} sin calificar
+              <span
+                *ngIf="
+                  tarea.totalEntregas &&
+                  tarea.totalEntregas > 0 &&
+                  (!tarea.entregasCalificadas || tarea.entregasCalificadas === 0)
+                "
+                class="badge bg-warning ms-1"
+              >
+                Sin calificar
               </span>
-              <span *ngIf="!tarea.totalEntregas || tarea.totalEntregas === 0" class="badge bg-secondary ms-1">
+              <span
+                *ngIf="!tarea.totalEntregas || tarea.totalEntregas === 0"
+                class="badge bg-secondary ms-1"
+              >
                 Sin entregas
               </span>
             </div>
           </ng-container>
-          
+
           <!-- Material de apoyo -->
           <div *ngIf="tarea.rutaArchivoApoyo" class="mt-3">
-            <strong>📎 Material:</strong>
-            <button class="btn btn-link btn-sm p-0 ms-2" (click)="abrirMaterial(tarea.rutaArchivoApoyo, tarea.nombreArchivoApoyo)">
-              📄 {{ tarea.nombreArchivoApoyo || 'Descargar material' }}
-            </button>
+            <strong class="me-2"> <i class="bi bi-paperclip"></i> Material: </strong>
+            <a
+              class="btn btn-outline-primary btn-sm d-inline-flex align-items-center"
+              (click)="abrirMaterial(tarea.rutaArchivoApoyo, tarea.nombreArchivoApoyo)"
+            >
+              <i class="bi bi-file-earmark-text me-1"></i>
+              <span class="text-truncate" style="max-width: 150px">
+                {{ tarea.nombreArchivoApoyo || 'Descargar material' }}
+              </span>
+            </a>
           </div>
-          
+
           <!-- Calificación para estudiante -->
           <div *ngIf="!esDocente && tarea.calificacion" class="mt-3">
-            <strong>⭐ Calificación:</strong> {{ tarea.calificacion }}/10
+            <strong><i class="bi bi-star-fill" style="color:#FCC735"></i> Calificación:</strong> {{ tarea.calificacion }}/10
           </div>
-          
+
           <!-- Retroalimentación para estudiante -->
           <div *ngIf="!esDocente && tarea.retroalimentacion" class="mt-2 p-2 bg-light rounded">
-            <strong>📝 Retroalimentación del docente:</strong>
+            <strong><i class="bi bi-chat-square-text"></i> Retroalimentación del docente:</strong>
             <p class="mb-0 mt-1">{{ tarea.retroalimentacion }}</p>
           </div>
         </div>
-        
+
         <div class="card-footer bg-transparent">
           <!-- Botones para Docente -->
           <div *ngIf="esDocente" class="d-flex gap-2">
-            <button class="btn btn-outline-primary btn-sm flex-grow-1" (click)="verDetalle(tarea.id)">
-              ✏️ Editar
+            <button
+              class="btn btn-outline-primary btn-sm flex-grow-1"
+              (click)="verDetalle(tarea.id)"
+            ><i class="bi bi-pencil"></i>
+               Editar
             </button>
-            <button class="btn btn-outline-danger btn-sm flex-grow-1" (click)="eliminarTarea(tarea)">
-    🗑️ Eliminar
-  </button>
-            <button class="btn btn-outline-success btn-sm flex-grow-1" (click)="verEntregas(tarea.id)">
-              📋 Ver Entregas
+            <button
+              class="btn btn-outline-danger btn-sm flex-grow-1"
+              (click)="eliminarTarea(tarea)"
+            ><i class="bi bi-trash"></i>
+              Eliminar
+            </button>
+            <button
+              class="btn btn-outline-success btn-sm flex-grow-1"
+              (click)="verEntregas(tarea.id)"
+            ><i class="bi bi-eye"></i>
+              Ver Entregas
             </button>
           </div>
-          
+
           <!-- Botón para Estudiante (solo si NO entregó y NO está vencida) -->
-          <button *ngIf="!esDocente && !tarea.entregada && !isVencida(tarea.fechaLimite)" 
-                  class="btn btn-outline-success btn-sm w-100" 
-                  (click)="entregarTarea(tarea.id)">
-            📤 Entregar Tarea
+          <button
+            *ngIf="!esDocente && !tarea.entregada && !isVencida(tarea.fechaLimite)"
+            class="btn btn-outline-success btn-sm w-100"
+            (click)="entregarTarea(tarea.id)"
+          >
+            <i class="bi bi-upload"></i> Entregar Tarea
           </button>
-          
+
           <!-- Mensaje de tarea vencida (estudiante) -->
-          <div *ngIf="!esDocente && !tarea.entregada && isVencida(tarea.fechaLimite)" 
-               class="text-center text-danger small">
+          <div
+            *ngIf="!esDocente && !tarea.entregada && isVencida(tarea.fechaLimite)"
+            class="text-center text-danger small tarea-vencida"
+          >
             ⏰ Tarea vencida - No se puede entregar
           </div>
-          
+
           <!-- Mensaje de tarea entregada (estudiante) -->
-          <div *ngIf="!esDocente && tarea.entregada" 
-               class="text-center text-success small">
-            ✅ Tarea entregada
+          <div *ngIf="!esDocente && tarea.entregada" class="text-center text-success small tarea-entregada">
+            <i class="bi bi-check-square"></i> Tarea entregada
           </div>
         </div>
       </div>
     </div>
   </div>
-  
+
   <div *ngIf="!loading && !error && tareasFiltradas.length === 0" class="text-center mt-5">
     <p class="text-muted">No hay tareas disponibles.</p>
     <button *ngIf="esDocente" class="btn btn-primary" (click)="crearTarea()">

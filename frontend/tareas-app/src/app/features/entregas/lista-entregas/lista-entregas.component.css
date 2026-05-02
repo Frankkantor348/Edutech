@@ -1,23 +1,116 @@
-.modal.show {
-  display: block;
-  background-color: rgba(0,0,0,0.5);
+/* Títulos */
+h1 {
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: #212529;
 }
 
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.5);
-  z-index: 1040;
-}
-
+/* Cards */
 .card {
-  transition: transform 0.2s;
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+}
+
+.card-header {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  background-color: #007BFF; /* tu color primario */
+  font-weight: 600;
+}
+
+.card-title {
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.card-body strong {
+  font-size: 1rem;     /* ≈16-17px */
+  font-weight: 600;      /* Semibold */
+}
+
+.total-entregas {
+  font-size: 1rem;       
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+
+/* Badges */
+.badge {
+  font-size: 0.9rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+/* Botones */
+.btn {
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.btn-outline-info {
+  color: #30B3FF;
+  border-color: #30B3FF;
+}
+
+.btn-outline-info:hover {
+  background-color: #1869B7;
+  color: #fff;
+}
+
+.btn-outline-primary {
+  color: #007BFF;
+  border-color: #007BFF;
+}
+
+.btn-outline-primary:hover {
+  background-color: #007BFF;
+  color: #fff;
+}
+
+/* Alertas */
+.alert {
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+/* Modal */
+.modal.show {
+  display: block;
+}
+
+.modal-dialog {
+  margin-top: 10vh;
+}
+
+.modal-content {
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+.modal-header {
+  border-bottom: 1px solid #E0E0E0;
+  font-weight: 600;
+}
+
+.modal-footer {
+  border-top: 1px solid #E0E0E0;
+}
+
+.btn-close {
+  filter: invert(0.6);
+}
+
+/* Fondo del modal */
+.modal-backdrop {
+  background-color: rgba(0,0,0,0.5);
+  z-index: 1040;
 }
