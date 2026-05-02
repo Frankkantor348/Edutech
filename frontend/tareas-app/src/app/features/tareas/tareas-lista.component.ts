@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth.service';
-import { ToastrService } from 'ngx-toastr';  // ✅ Importar Toastr
+import { ToastrService } from 'ngx-toastr';
 
 interface Tarea {
   id: number;
@@ -43,7 +43,7 @@ export class TareasListaComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
-  private toastr = inject(ToastrService);  // ✅ Inyectar Toastr
+  private toastr = inject(ToastrService);
   
   tareas: Tarea[] = [];
   tareasFiltradas: Tarea[] = [];
@@ -51,11 +51,15 @@ export class TareasListaComponent implements OnInit {
   error: string = '';
   esDocente: boolean = false;
   today: Date = new Date();
-  apiUrl: string = 'http://localhost:5279';
+  // ✅ CORREGIDO: Usar la URL del environment para las API
+  // ✅ Para archivos estáticos, usar la URL base sin /api
+  apiBaseUrl: string = environment.apiUrl.replace('/api', ''); // http://localhost:5278
   filtroActual: string = '';
 
   ngOnInit() {
     console.log('🔵 Componente iniciado');
+    console.log('📡 API URL:', environment.apiUrl);
+    console.log('📁 Base URL para archivos:', this.apiBaseUrl);
     this.esDocente = this.authService.getRol() === 'Docente';
     
     this.route.queryParams.subscribe(params => {
@@ -86,7 +90,7 @@ export class TareasListaComponent implements OnInit {
       },
       error: (error) => {
         console.error('❌ Error:', error);
-        this.toastr.error('Error al cargar las tareas', 'Error');  // ✅ Notificación
+        this.toastr.error('Error al cargar las tareas', 'Error');
         this.error = 'Error al cargar las tareas';
         this.loading = false;
         this.cdr.detectChanges();
@@ -105,19 +109,15 @@ export class TareasListaComponent implements OnInit {
       switch(this.filtroActual) {
         case 'pendiente':
           this.tareasFiltradas = this.tareas.filter(t => !t.entregada && !this.isVencida(t.fechaLimite));
-          console.log('📋 Mostrando tareas pendientes:', this.tareasFiltradas.length);
           break;
         case 'entregada':
           this.tareasFiltradas = this.tareas.filter(t => t.entregada && !t.calificacion);
-          console.log('📋 Mostrando tareas entregadas:', this.tareasFiltradas.length);
           break;
         case 'calificada':
           this.tareasFiltradas = this.tareas.filter(t => t.calificacion !== undefined && t.calificacion !== null);
-          console.log('📋 Mostrando tareas calificadas:', this.tareasFiltradas.length);
           break;
         case 'vencida':
           this.tareasFiltradas = this.tareas.filter(t => !t.entregada && this.isVencida(t.fechaLimite));
-          console.log('📋 Mostrando tareas vencidas:', this.tareasFiltradas.length);
           break;
         default:
           this.tareasFiltradas = this.tareas;
@@ -126,36 +126,39 @@ export class TareasListaComponent implements OnInit {
       switch(this.filtroActual) {
         case 'publicadas':
           this.tareasFiltradas = this.tareas;
-          console.log('📋 Mostrando todas las tareas publicadas:', this.tareasFiltradas.length);
           break;
         case 'pendientes':
           this.tareasFiltradas = this.tareas.filter(t => t.totalEntregas && t.totalEntregas > 0 && (!t.entregasCalificadas || t.entregasCalificadas === 0));
-          console.log('📋 Mostrando tareas con entregas pendientes:', this.tareasFiltradas.length);
           break;
         case 'calificadas':
           this.tareasFiltradas = this.tareas.filter(t => t.entregasCalificadas && t.entregasCalificadas > 0);
-          console.log('📋 Mostrando tareas con entregas calificadas:', this.tareasFiltradas.length);
           break;
         default:
           this.tareasFiltradas = this.tareas;
       }
     }
+    console.log(`📋 Filtro "${this.filtroActual}" - Mostrando ${this.tareasFiltradas.length} tareas`);
   }
 
+  // ✅ MÉTODO CORREGIDO para abrir material de apoyo
   abrirMaterial(ruta: string | undefined, nombre: string | undefined) {
     console.log('========== DEBUG MATERIAL ==========');
     console.log('Ruta en BD:', ruta);
     console.log('Nombre archivo:', nombre);
+    console.log('Base URL:', this.apiBaseUrl);
     
     if (!ruta) {
       console.error('❌ No hay ruta de archivo');
-      this.toastr.warning('No hay archivo disponible', 'Advertencia');  // ✅ Notificación
+      this.toastr.warning('No hay archivo disponible', 'Advertencia');
       return;
     }
     
-    const url = `${this.apiUrl}${ruta}`;
+    // ✅ Construir URL correcta: base (sin /api) + ruta
+    const url = `${this.apiBaseUrl}${ruta}`;
     console.log('URL completa:', url);
     console.log('====================================');
+    
+    // Abrir en nueva pestaña
     window.open(url, '_blank');
   }
 
@@ -167,19 +170,18 @@ export class TareasListaComponent implements OnInit {
     return limite < hoy;
   }
 
-  // ✅ MÉTODO PARA ELIMINAR TAREA CON NOTIFICACIÓN TOAST
   eliminarTarea(tarea: Tarea) {
     if (confirm(`¿Eliminar la tarea "${tarea.titulo}"? Esta acción no se puede deshacer. Se eliminarán también todas las entregas asociadas.`)) {
-      console.log(`Eliminando tarea ID: ${tarea.id}`);
+      console.log(`🗑️ Eliminando tarea ID: ${tarea.id}`);
       this.http.delete(`${environment.apiUrl}/TareasApi/${tarea.id}`).subscribe({
         next: () => {
           console.log('✅ Tarea eliminada exitosamente');
-          this.toastr.success(`Tarea "${tarea.titulo}" eliminada`, 'Éxito');  // ✅ Notificación éxito
-          this.cargarTareas();  // Recargar la lista de tareas
+          this.toastr.success(`Tarea "${tarea.titulo}" eliminada`, 'Éxito');
+          this.cargarTareas();
         },
         error: (error) => {
           console.error('❌ Error al eliminar:', error);
-          this.toastr.error('Error al eliminar la tarea', 'Error');  // ✅ Notificación error
+          this.toastr.error('Error al eliminar la tarea', 'Error');
           this.error = 'Error al eliminar la tarea';
         }
       });
