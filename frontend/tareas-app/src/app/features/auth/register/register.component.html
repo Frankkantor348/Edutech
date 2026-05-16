@@ -29,12 +29,42 @@
             
             <div class="mb-3">
               <label class="form-label">Contraseña *</label>
-              <input type="password" class="form-control" [(ngModel)]="password" name="password" required>
+              <div class="input-group">
+                <input 
+                  [type]="showPassword ? 'text' : 'password'"
+                  class="form-control"
+                  [(ngModel)]="password"
+                  name="password"
+                  required>
+                <span 
+                  class="password-toggle"
+                  (click)="togglePassword()">
+                  <i 
+                    class="bi"
+                    [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'">
+                  </i>
+                </span>
+              </div>
             </div>
             
             <div class="mb-3">
               <label class="form-label">Confirmar Contraseña *</label>
-              <input type="password" class="form-control" [(ngModel)]="confirmPassword" name="confirmPassword" required>
+              <div class="input-group">
+                <input 
+                  [type]="showConfirmPassword ? 'text' : 'password'"
+                  class="form-control"
+                  [(ngModel)]="confirmPassword"
+                  name="confirmPassword"
+                  required>
+                <span 
+                  class="password-toggle"
+                  (click)="toggleConfirmPassword()">
+                  <i 
+                    class="bi"
+                    [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'">
+                  </i>
+                </span>
+              </div>
             </div>
             
             <div class="mb-3">

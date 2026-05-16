@@ -67,4 +67,15 @@ export class RegisterComponent {
       }
     });
   }
+
+  showPassword: boolean = false;
+  showConfirmPassword: boolean = false;
+
+  togglePassword() {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPassword() {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
 }
