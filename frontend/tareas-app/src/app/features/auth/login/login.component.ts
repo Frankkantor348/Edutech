@@ -47,6 +47,6 @@ export class LoginComponent {
 
   showPassword: boolean = false;
   togglePassword() {
-  this.showPassword = !this.showPassword;
+    this.showPassword = !this.showPassword;
   }
 }

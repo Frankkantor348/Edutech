@@ -7,7 +7,7 @@
     </div>
   </div>
   
-  <div *ngIf="loading" class="text-center mt-5">
+  <div *ngIf="loading" class="text-center mt-6">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando...</span>
     </div>
@@ -21,12 +21,13 @@
   <div *ngIf="!loading && !error && !esDocente" class="row g-3 mt-1 px-3">
     <div class="col-12 col-md-6">
       <div class="card text-white bg-info h-100" style="min-height: 120px; cursor: pointer;" (click)="irATareas('pendiente')">
-        <div class="card-body text-center">
+          <div class="card-body text-center">
           <h2 class="display-6">{{ tareasPendientes }}</h2>
           <p class="mb-0">Pendientes</p>
         </div>
       </div>
     </div>
+
     <div class="col-12 col-md-6">
       <div class="card text-white bg-warning h-100" style="min-height: 120px; cursor: pointer;" (click)="irATareas('entregada')">
         <div class="card-body text-center">
@@ -35,6 +36,7 @@
         </div>
       </div>
     </div>
+
     <div class="col-12 col-md-6">
       <div class="card text-white bg-success h-100" style="min-height: 120px; cursor: pointer;" (click)="irATareas('calificada')">
         <div class="card-body text-center">
@@ -43,6 +45,7 @@
         </div>
       </div>
     </div>
+
     <div class="col-12 col-md-6">
       <div class="card text-white bg-danger h-100" style="min-height: 120px; cursor: pointer;" (click)="irATareas('vencida')">
         <div class="card-body text-center">
@@ -63,6 +66,7 @@
         </div>
       </div>
     </div>
+
     <div class="col-12 col-md-6">
       <div class="card text-white bg-warning h-100" style="min-height: 120px; cursor: pointer;" (click)="irATareas('pendientes')">
         <div class="card-body text-center">
@@ -71,6 +75,7 @@
         </div>
       </div>
     </div>
+
     <div class="col-12 col-md-6">
       <div class="card text-white bg-success h-100" style="min-height: 120px; cursor: pointer;" (click)="irATareas('calificadas')">
         <div class="card-body text-center">
@@ -79,6 +84,7 @@
         </div>
       </div>
     </div>
+
     <div class="col-12 col-md-6">
       <div class="card text-white bg-info h-100" style="min-height: 120px; cursor: pointer;" (click)="irATareas('estudiantes')">
         <div class="card-body text-center">
