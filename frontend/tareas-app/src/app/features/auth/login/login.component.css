@@ -30,3 +30,22 @@
 .btn-primary:hover {
   background-color: #0046B7;
 }
+
+.password-toggle{
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 10;
+    color: #6c757d;
+}
+
+.input-group{
+    position: relative;
+}
+
+.input-group input{
+    padding-right: 45px;
+    border-radius: 10px !important;
+}
