@@ -6,6 +6,59 @@
       <h1 class="mb-3">Dashboard</h1>
     </div>
   </div>
+
+  <!-- Panel de filtros -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">📊 Filtrar estadísticas</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-bold">📚 Asignatura</label>
+          <select class="form-select" [(ngModel)]="filtroAsignatura" (change)="aplicarFiltros()">
+            <option [value]="null">Todas</option>
+            <option *ngFor="let asig of asignaturas" [value]="asig.id">{{ asig.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-bold">📖 Curso</label>
+          <select class="form-select" [(ngModel)]="filtroCurso" (change)="aplicarFiltros()">
+            <option value="">Todos</option>
+            <option *ngFor="let curso of cursosDisponibles" [value]="curso">{{ curso }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-bold">🏷️ Estado</label>
+          <select class="form-select" [(ngModel)]="filtroEstado" (change)="aplicarFiltros()">
+            <option value="">Todos</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="entregada">Entregadas</option>
+            <option value="calificada">Calificadas</option>
+            <option value="vencida">Vencidas</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-bold">📅 Desde</label>
+          <input type="date" class="form-control" [(ngModel)]="filtroFechaDesde" (change)="aplicarFiltros()">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-bold">📅 Hasta</label>
+          <input type="date" class="form-control" [(ngModel)]="filtroFechaHasta" (change)="aplicarFiltros()">
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+          <button class="btn btn-secondary w-100" (click)="limpiarFiltros()">
+            🧹 Limpiar filtros
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <div *ngIf="loading" class="text-center mt-6">
     <div class="spinner-border text-primary" role="status">
@@ -21,7 +74,7 @@
   <div *ngIf="!loading && !error && !esDocente" class="row g-3 mt-1 px-3">
     <div class="col-12 col-md-6">
       <div class="card text-white bg-info h-100" style="min-height: 120px; cursor: pointer;" (click)="irATareas('pendiente')">
-          <div class="card-body text-center">
+        <div class="card-body text-center">
           <h2 class="display-6">{{ tareasPendientes }}</h2>
           <p class="mb-0">Pendientes</p>
         </div>
