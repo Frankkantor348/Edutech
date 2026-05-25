@@ -24,50 +24,29 @@ namespace Tareas.Controllers.Api
 
         // GET: api/dashboard
         [HttpGet]
-        public async Task<IActionResult> GetDashboard(
-            [FromQuery] int? asignaturaId,
-            [FromQuery] string? curso,
-            [FromQuery] string? estado,
-            [FromQuery] DateTime? fechaDesde,
-            [FromQuery] DateTime? fechaHasta)
+        public async Task<IActionResult> GetDashboard([FromQuery] string? curso = null)
         {
             if (User.IsInRole("Docente"))
             {
-                return Ok(await GetDashboardDocente(asignaturaId, curso, estado, fechaDesde, fechaHasta));
+                return Ok(await GetDashboardDocente(curso));
             }
             else if (User.IsInRole("Estudiante"))
             {
-                return Ok(await GetDashboardEstudiante(asignaturaId, curso, estado, fechaDesde, fechaHasta));
+                return Ok(await GetDashboardEstudiante());
             }
 
             return Unauthorized(new { mensaje = "Rol no válido" });
         }
 
-        private async Task<DashboardDocenteResponse> GetDashboardDocente(
-    int? asignaturaId, string? curso, string? estado, DateTime? fechaDesde, DateTime? fechaHasta)
-{
-    var docenteId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        private async Task<DashboardDocenteResponse> GetDashboardDocente(string? curso = null)
+        {
+            var docenteId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var cursoFiltrado = string.IsNullOrWhiteSpace(curso) ? null : curso.Trim();
 
-    // Query base con filtros
-    var query = _context.Tareas
-        .Where(t => t.DocenteId == docenteId);
-
-    // Aplicar filtros
-    if (asignaturaId.HasValue)
-        query = query.Where(t => t.AsignaturaId == asignaturaId);
-    
-    if (!string.IsNullOrEmpty(curso))
-        query = query.Where(t => t.Curso == curso);
-    
-    if (fechaDesde.HasValue)
-        query = query.Where(t => t.FechaLimite >= fechaDesde.Value);
-    
-    if (fechaHasta.HasValue)
-        query = query.Where(t => t.FechaLimite <= fechaHasta.Value);
-
-    var tareas = await query
-        .OrderByDescending(t => t.FechaPublicacion)
-        .ToListAsync();
+            var tareas = await _context.Tareas
+                .Where(t => t.DocenteId == docenteId && (cursoFiltrado == null || t.Curso == cursoFiltrado))
+                .OrderByDescending(t => t.FechaPublicacion)
+                .ToListAsync();
 
     var tareasIds = tareas.Select(t => t.Id).ToList();
 
@@ -84,28 +63,21 @@ namespace Tareas.Controllers.Api
     var entregasQuery = _context.Entregas
         .Where(e => tareasIds.Contains(e.TareaId));
 
-    // Aplicar filtro de estado para entregas
-    if (estado != null)
-    {
-        switch (estado)
-        {
-            case "pendientes":
-                entregasQuery = entregasQuery.Where(e => e.Calificacion == null);
-                break;
-            case "calificadas":
-                entregasQuery = entregasQuery.Where(e => e.Calificacion != null);
-                break;
-        }
-    }
-
     var totalEntregasPendientes = await entregasQuery.CountAsync(e => e.Calificacion == null);
     var totalEntregasCalificadas = await entregasQuery.CountAsync(e => e.Calificacion != null);
+    var totalEntregasRealizadas = await entregasQuery
+        .Select(e => e.EstudianteId)
+        .Distinct()
+        .CountAsync();
+    var totalEntregasNoRealizadas = Math.Max(0, totalEstudiantesCount - totalEntregasRealizadas);
 
     return new DashboardDocenteResponse
     {
         TotalTareasPublicadas = tareas.Count,
         TotalEntregasPendientes = totalEntregasPendientes,
         TotalEntregasCalificadas = totalEntregasCalificadas,
+        TotalEntregasRealizadas = totalEntregasRealizadas,
+        TotalEntregasNoRealizadas = totalEntregasNoRealizadas,
         TotalEstudiantes = totalEstudiantesCount,
         TareasRecientes = tareas.Take(5).Select(t => new TareaResumenResponse
         {
@@ -117,27 +89,49 @@ namespace Tareas.Controllers.Api
         }).ToList()
     };
 }
-        private async Task<DashboardEstudianteResponse> GetDashboardEstudiante(
-            int? asignaturaId, string? curso, string? estado, DateTime? fechaDesde, DateTime? fechaHasta)
+
+        [HttpGet("estudiantes")]
+        [Authorize(Roles = "Docente")]
+        public async Task<IActionResult> GetEstudiantesPorEntrega([FromQuery] string tipo, [FromQuery] string? curso = null)
+        {
+            var docenteId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var cursoFiltrado = string.IsNullOrWhiteSpace(curso) ? null : curso.Trim();
+
+            var tareaIds = await _context.Tareas
+                .Where(t => t.DocenteId == docenteId && (cursoFiltrado == null || t.Curso == cursoFiltrado))
+                .Select(t => t.Id)
+                .ToListAsync();
+
+            var estudiantes = await _userManager.GetUsersInRoleAsync("Estudiante");
+            var entregasEstudiantes = await _context.Entregas
+                .Where(e => tareaIds.Contains(e.TareaId))
+                .Select(e => e.EstudianteId)
+                .Distinct()
+                .ToListAsync();
+
+            var estudiantesFiltrados = tipo?.ToLower() switch
+            {
+                "entregaron" => estudiantes.Where(s => entregasEstudiantes.Contains(s.Id)).ToList(),
+                "noentregaron" => estudiantes.Where(s => !entregasEstudiantes.Contains(s.Id)).ToList(),
+                "no-entregaron" => estudiantes.Where(s => !entregasEstudiantes.Contains(s.Id)).ToList(),
+                _ => new List<ApplicationUser>()
+            };
+
+            var response = estudiantesFiltrados.Select(s => new EstudianteEntregaResponse
+            {
+                Id = s.Id,
+                NombreCompleto = string.IsNullOrWhiteSpace(s.NombreCompleto) ? s.UserName ?? string.Empty : s.NombreCompleto,
+                Email = s.Email ?? string.Empty
+            }).ToList();
+
+            return Ok(response);
+        }
+
+        private async Task<DashboardEstudianteResponse> GetDashboardEstudiante()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Query base con filtros
-            var query = _context.Tareas.AsQueryable();
-
-            if (asignaturaId.HasValue)
-                query = query.Where(t => t.AsignaturaId == asignaturaId);
-            
-            if (!string.IsNullOrEmpty(curso))
-                query = query.Where(t => t.Curso == curso);
-            
-            if (fechaDesde.HasValue)
-                query = query.Where(t => t.FechaLimite >= fechaDesde.Value);
-            
-            if (fechaHasta.HasValue)
-                query = query.Where(t => t.FechaLimite <= fechaHasta.Value);
-
-            var tareas = await query
+            var tareas = await _context.Tareas
                 .OrderBy(t => t.FechaLimite)
                 .ToListAsync();
 
@@ -153,20 +147,6 @@ namespace Tareas.Controllers.Api
                 entregasRealizadas.TryGetValue(t.Id, out var entrega);
                 var entregada = entrega != null;
                 var calificada = entrega?.Calificacion.HasValue ?? false;
-
-                // Aplicar filtro de estado si viene
-                if (estado != null)
-                {
-                    bool cumpleFiltro = estado switch
-                    {
-                        "pendiente" => !entregada && t.FechaLimite.Date >= hoy,
-                        "entregada" => entregada && !calificada,
-                        "calificada" => calificada,
-                        "vencida" => !entregada && t.FechaLimite.Date < hoy,
-                        _ => true
-                    };
-                    if (!cumpleFiltro) return null;
-                }
 
                 return new TareaEstudianteResponse
                 {
@@ -192,7 +172,7 @@ namespace Tareas.Controllers.Api
             return new DashboardEstudianteResponse
             {
                 TareasPendientes = tareasViewModel.Count(t => !t.Entregada && t.FechaLimite.Date >= hoy),
-                TareasEntregadas = tareasViewModel.Count(t => t.Entregada && !t.Calificada),
+                TareasEntregadas = tareasViewModel.Count(t => t.Entregada),
                 TareasCalificadas = tareasViewModel.Count(t => t.Calificada),
                 TareasVencidas = tareasViewModel.Count(t => !t.Entregada && t.FechaLimite.Date < hoy),
                 TareasProximas = tareasViewModel
@@ -323,6 +303,8 @@ namespace Tareas.Controllers.Api
         public int TotalTareasPublicadas { get; set; }
         public int TotalEntregasPendientes { get; set; }
         public int TotalEntregasCalificadas { get; set; }
+        public int TotalEntregasRealizadas { get; set; }
+        public int TotalEntregasNoRealizadas { get; set; }
         public int TotalEstudiantes { get; set; }
         public List<TareaResumenResponse> TareasRecientes { get; set; } = new();
     }
@@ -334,6 +316,13 @@ namespace Tareas.Controllers.Api
         public DateTime FechaLimite { get; set; }
         public int EntregasRealizadas { get; set; }
         public int EntregasPendientes { get; set; }
+    }
+
+    public class EstudianteEntregaResponse
+    {
+        public string Id { get; set; } = string.Empty;
+        public string NombreCompleto { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
     }
 
     public class DashboardEstudianteResponse

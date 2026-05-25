@@ -174,7 +174,7 @@ namespace Tareas.Controllers.Api
 
                 // Validar extensión
                 var extension = Path.GetExtension(request.ArchivoEntrega.FileName).ToLower();
-                var extensionesPermitidas = new[] { ".pdf", ".doc", ".docx", ".txt", ".zip", ".jpg", ".png" };
+                var extensionesPermitidas = new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".zip", ".jpg", ".png" };
                 if (!extensionesPermitidas.Contains(extension))
                     return BadRequest(new { mensaje = "Tipo de archivo no permitido" });
 
