@@ -27,28 +27,37 @@ namespace Tareas.Controllers.Api
 
         // GET: api/tareas
         [HttpGet]
-        public async Task<IActionResult> GetTareas()
+        public async Task<IActionResult> GetTareas(
+            [FromQuery] string? curso,
+            [FromQuery] string? estado,
+            [FromQuery] DateTime? fechaDesde,
+            [FromQuery] DateTime? fechaHasta)
         {
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var esDocente = User.IsInRole("Docente");
 
-                List<Tarea> tareas;
+                var query = _context.Tareas.AsQueryable();
 
                 if (esDocente)
                 {
-                    tareas = await _context.Tareas
-                        .Where(t => t.DocenteId == userId)
-                        .OrderByDescending(t => t.FechaPublicacion)
-                        .ToListAsync();
+                    query = query.Where(t => t.DocenteId == userId);
                 }
-                else
-                {
-                    tareas = await _context.Tareas
-                        .OrderBy(t => t.FechaLimite)
-                        .ToListAsync();
-                }
+
+                if (!string.IsNullOrEmpty(curso))
+                    query = query.Where(t => t.Curso == curso);
+
+                if (fechaDesde.HasValue)
+                    query = query.Where(t => t.FechaLimite >= fechaDesde.Value);
+
+                if (fechaHasta.HasValue)
+                    query = query.Where(t => t.FechaLimite <= fechaHasta.Value);
+
+                var tareas = await (esDocente
+                    ? query.OrderByDescending(t => t.FechaPublicacion)
+                    : query.OrderBy(t => t.FechaLimite))
+                    .ToListAsync();
 
                 var entregas = new Dictionary<int, Entrega>();
                 if (!esDocente)
@@ -58,32 +67,89 @@ namespace Tareas.Controllers.Api
                         .ToDictionaryAsync(e => e.TareaId, e => e);
                 }
 
-                var response = tareas.Select(t => new TareaResponse
+                var hoy = DateTime.Now.Date;
+                var response = tareas.Select(t =>
                 {
-                    Id = t.Id,
-                    Titulo = t.Titulo,
-                    Descripcion = t.Descripcion,
-                    FechaPublicacion = t.FechaPublicacion,
-                    FechaLimite = t.FechaLimite,
-                    ColorSemaforo = t.ColorSemaforo,
-                    Curso = t.Curso,
-                    DocenteId = t.DocenteId,
-                    RutaArchivoApoyo = t.RutaArchivoApoyo,
-                    NombreArchivoApoyo = t.NombreArchivoApoyo,
-                    Entregada = !esDocente && entregas.ContainsKey(t.Id),
-                    FechaEntrega = !esDocente && entregas.ContainsKey(t.Id) ? entregas[t.Id].FechaEntrega : null,  // ✅ Agregar esta línea
-                    Calificacion = !esDocente && entregas.ContainsKey(t.Id) ? entregas[t.Id].Calificacion : null,
-                    Retroalimentacion = !esDocente && entregas.ContainsKey(t.Id) ? entregas[t.Id].RetroalimentacionDocente : null,
-                    Asignatura = null,
-                    TotalEntregas = esDocente ? _context.Entregas.Count(e => e.TareaId == t.Id) : 0,
-                    EntregasCalificadas = esDocente ? _context.Entregas.Count(e => e.TareaId == t.Id && e.Calificacion != null) : 0
-                });
+                    entregas.TryGetValue(t.Id, out var entrega);
+                    var entregada = entrega != null;
+                    var calificacion = entrega?.Calificacion;
+
+                    return new TareaResponse
+                    {
+                        Id = t.Id,
+                        Titulo = t.Titulo,
+                        Descripcion = t.Descripcion,
+                        FechaPublicacion = t.FechaPublicacion,
+                        FechaLimite = t.FechaLimite,
+                        ColorSemaforo = t.ColorSemaforo,
+                        Curso = t.Curso,
+                        DocenteId = t.DocenteId,
+                        RutaArchivoApoyo = t.RutaArchivoApoyo,
+                        NombreArchivoApoyo = t.NombreArchivoApoyo,
+                        Entregada = entregada,
+                        FechaEntrega = entregada ? entrega?.FechaEntrega : null,
+                        Calificacion = calificacion,
+                        Retroalimentacion = entrega?.RetroalimentacionDocente,
+                        TotalEntregas = esDocente ? _context.Entregas.Count(e => e.TareaId == t.Id) : 0,
+                        EntregasCalificadas = esDocente ? _context.Entregas.Count(e => e.TareaId == t.Id && e.Calificacion != null) : 0
+                    };
+                }).ToList();
+
+                if (!string.IsNullOrEmpty(estado))
+                {
+                    response = esDocente
+                        ? estado switch
+                        {
+                            "pendientes" => response.Where(t => t.TotalEntregas > 0 && t.EntregasCalificadas == 0).ToList(),
+                            "calificadas" => response.Where(t => t.EntregasCalificadas > 0).ToList(),
+                            _ => response
+                        }
+                        : estado switch
+                        {
+                            "pendiente" => response.Where(t => !t.Entregada && t.FechaLimite.Date >= hoy).ToList(),
+                            "entregada" => response.Where(t => t.Entregada && !t.Calificacion.HasValue).ToList(),
+                            "calificada" => response.Where(t => t.Calificacion.HasValue).ToList(),
+                            "vencida" => response.Where(t => !t.Entregada && t.FechaLimite.Date < hoy).ToList(),
+                            _ => response
+                        };
+                }
+
                 return Ok(response);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"ERROR en GetTareas: {ex.Message}");
                 return StatusCode(500, new { mensaje = "Error al obtener tareas", error = ex.Message });
+            }
+        }
+
+        // GET: api/tareas/cursos
+        [HttpGet("cursos")]
+        public async Task<IActionResult> GetCursos()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var esDocente = User.IsInRole("Docente");
+
+                var query = _context.Tareas.AsQueryable();
+                if (esDocente)
+                {
+                    query = query.Where(t => t.DocenteId == userId);
+                }
+
+                var cursos = await query
+                    .Where(t => t.Curso != null)
+                    .Select(t => t.Curso!)
+                    .Distinct()
+                    .ToListAsync();
+
+                return Ok(cursos);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR en GetCursos: {ex.Message}");
+                return StatusCode(500, new { mensaje = "Error al obtener cursos", error = ex.Message });
             }
         }
 
@@ -125,8 +191,7 @@ namespace Tareas.Controllers.Api
                     FechaEntrega = entrega?.FechaEntrega,
                     Calificacion = entrega?.Calificacion,
                     Retroalimentacion = entrega?.RetroalimentacionDocente,
-                    ComentarioEstudiante = entrega?.ComentarioEstudiante,
-                    Asignatura = null
+                    ComentarioEstudiante = entrega?.ComentarioEstudiante
                 };
 
                 return Ok(response);
@@ -206,7 +271,6 @@ namespace Tareas.Controllers.Api
                 Console.WriteLine($"Descripcion: {request.Descripcion}");
                 Console.WriteLine($"FechaLimite: {request.FechaLimite}");
                 Console.WriteLine($"Curso: {request.Curso}");
-                Console.WriteLine($"AsignaturaId: {request.AsignaturaId}");
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
@@ -452,7 +516,6 @@ namespace Tareas.Controllers.Api
         public string Descripcion { get; set; } = string.Empty;
         public DateTime FechaLimite { get; set; }
         public string? Curso { get; set; }
-        public int? AsignaturaId { get; set; }
     }
 
     public class CrearTareaFormRequest
@@ -461,7 +524,6 @@ namespace Tareas.Controllers.Api
         public string Descripcion { get; set; } = string.Empty;
         public DateTime FechaLimite { get; set; }
         public string? Curso { get; set; }
-        public int? AsignaturaId { get; set; }
         public IFormFile? ArchivoApoyo { get; set; }
     }
 
@@ -471,7 +533,6 @@ namespace Tareas.Controllers.Api
         public string Descripcion { get; set; } = string.Empty;
         public DateTime FechaLimite { get; set; }
         public string? Curso { get; set; }
-        public int? AsignaturaId { get; set; }
     }
 
     public class ActualizarTareaFormRequest
@@ -480,19 +541,12 @@ namespace Tareas.Controllers.Api
         public string Descripcion { get; set; } = string.Empty;
         public DateTime FechaLimite { get; set; }
         public string? Curso { get; set; }
-        public int? AsignaturaId { get; set; }
         public IFormFile? ArchivoApoyo { get; set; }
     }
 
     // ==========================================
     // RESPONSE MODELS
     // ==========================================
-
-    public class AsignaturaDto
-    {
-        public int Id { get; set; }
-        public string Nombre { get; set; } = string.Empty;
-    }
 
     public class TareaResponse
     {
@@ -509,7 +563,6 @@ namespace Tareas.Controllers.Api
         public bool Entregada { get; set; }
         public double? Calificacion { get; set; }
         public string? Retroalimentacion { get; set; }
-        public AsignaturaDto? Asignatura { get; set; }
         public DateTime? FechaEntrega { get; set; }
         // Nuevos campos para docente
         public int TotalEntregas { get; set; }

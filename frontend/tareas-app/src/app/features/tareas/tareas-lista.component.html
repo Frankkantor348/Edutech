@@ -8,6 +8,56 @@
     </button>
   </div>
 
+  <div *ngIf="esDocente" class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Filtrar por estado</label>
+          <select class="form-select" name="filtroEstado" [(ngModel)]="filtroActual" (change)="actualizarFiltro()">
+            <option value="">Todos</option>
+            <ng-container *ngIf="!esDocente">
+              <option value="pendiente">Pendientes</option>
+              <option value="entregada">Entregadas</option>
+              <option value="calificada">Calificadas</option>
+              <option value="vencida">Vencidas</option>
+            </ng-container>
+            <ng-container *ngIf="esDocente">
+              <option value="publicadas">Publicadas</option>
+              <option value="pendientes">Pendientes por calificar</option>
+              <option value="calificadas">Calificadas</option>
+            </ng-container>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Filtrar por curso</label>
+          <select class="form-select" name="filtroCurso" [(ngModel)]="filtroCurso" (change)="actualizarFiltro()">
+            <option value="">Todos</option>
+            <option *ngFor="let curso of cursosDisponibles" [value]="curso">{{ curso }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label fw-bold">Desde</label>
+          <input class="form-control" type="date" name="fechaDesde" [(ngModel)]="filtroFechaDesde" (change)="actualizarFiltro()" />
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label fw-bold">Hasta</label>
+          <input class="form-control" type="date" name="fechaHasta" [(ngModel)]="filtroFechaHasta" (change)="actualizarFiltro()" />
+        </div>
+
+        <div class="col-md-2 d-grid">
+          <button class="btn btn-primary" (click)="actualizarFiltro()">Aplicar</button>
+        </div>
+
+        <div class="col-md-2 d-grid">
+          <button class="btn btn-outline-secondary" (click)="limpiarFiltro()">Limpiar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div *ngIf="loading" class="text-center mt-5">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando...</span>
@@ -43,15 +93,6 @@
           </div>
           <div class="mb-2"><strong>Curso:</strong> {{ tarea.curso || 'Sin curso' }}</div>
 
-          <!-- Asignatura -->
-          <div class="mb-2" *ngIf="tarea.asignatura">
-            <strong>Asignatura:</strong>
-            <span class="badge bg-info ms-1">{{ tarea.asignatura.nombre }}</span>
-          </div>
-          <div class="mb-2" *ngIf="!tarea.asignatura">
-            <strong>Asignatura:</strong>
-            <span class="badge bg-secondary ms-1">Sin asignatura</span>
-          </div>
 
           <!-- ========================================== -->
           <!-- VISTA ESTUDIANTE -->
@@ -162,21 +203,21 @@
 
         <div class="card-footer bg-transparent">
           <!-- Botones para Docente -->
-          <div *ngIf="esDocente" class="d-flex gap-2">
+          <div *ngIf="esDocente" class="d-flex gap-1 flex-wrap">
             <button
-              class="btn btn-outline-primary btn-sm flex-grow-1"
+              class="btn btn-outline-primary btn-sm"
               (click)="verDetalle(tarea.id)"
             ><i class="bi bi-pencil"></i>
                Editar
             </button>
             <button
-              class="btn btn-outline-danger btn-sm flex-grow-1"
+              class="btn btn-outline-danger btn-sm"
               (click)="eliminarTarea(tarea)"
             ><i class="bi bi-trash"></i>
               Eliminar
             </button>
             <button
-              class="btn btn-outline-success btn-sm flex-grow-1"
+              class="btn btn-outline-success btn-sm"
               (click)="verEntregas(tarea.id)"
             ><i class="bi bi-eye"></i>
               Ver Entregas
@@ -210,8 +251,9 @@
   </div>
 
   <div *ngIf="!loading && !error && tareasFiltradas.length === 0" class="text-center mt-5">
-    <p class="text-muted">No hay tareas disponibles.</p>
-    <button *ngIf="esDocente" class="btn btn-primary" (click)="crearTarea()">
+    <p class="text-muted" *ngIf="esDocente && filtroActual === 'pendientes'">No hay tareas por calificar.</p>
+    <p class="text-muted" *ngIf="!(esDocente && filtroActual === 'pendientes')">No hay tareas disponibles.</p>
+    <button *ngIf="esDocente && filtroActual !== 'pendientes'" class="btn btn-primary" (click)="crearTarea()">
       Crear primera tarea
     </button>
   </div>

@@ -2,11 +2,10 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { NavbarComponent } from '../../../shared/navbar/navbar.component';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
-import { AsignaturaService, Asignatura } from '../../../core/services/asignatura.service';
 import { ToastrService } from 'ngx-toastr';  // ✅ Importar Toastr
 
 @Component({
@@ -21,7 +20,6 @@ export class FormTareaComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
-  private asignaturaService = inject(AsignaturaService);
   private cdr = inject(ChangeDetectorRef);
   private toastr = inject(ToastrService);  // ✅ Inyectar Toastr
   
@@ -29,21 +27,17 @@ export class FormTareaComponent implements OnInit {
     titulo: '',
     descripcion: '',
     fechaLimite: '',
-    curso: '',
-    asignaturaId: null as number | null
+    curso: ''
   };
   
-  asignaturas: Asignatura[] = [];
   archivoSeleccionado: File | null = null;
   loading: boolean = false;
-  cargandoAsignaturas: boolean = false;
   error: string = '';
   esEdicion: boolean = false;
   tareaId: number | null = null;
 
   ngOnInit() {
     console.log('🟢 ngOnInit - Iniciando formulario');
-    this.cargarAsignaturas();
     
     const idParam = this.route.snapshot.paramMap.get('id');
     console.log('🟢 idParam:', idParam);
@@ -58,24 +52,6 @@ export class FormTareaComponent implements OnInit {
       this.loading = false;
       console.log('🟢 Creando nueva tarea');
     }
-  }
-
-  cargarAsignaturas() {
-    console.log('🟡 Cargando asignaturas...');
-    this.cargandoAsignaturas = true;
-    this.asignaturaService.getAsignaturas().subscribe({
-      next: (asignaturas) => {
-        console.log('🟡 Asignaturas cargadas:', asignaturas);
-        this.asignaturas = asignaturas;
-        this.cargandoAsignaturas = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('❌ Error cargando asignaturas:', error);
-        this.toastr.error('Error al cargar las asignaturas', 'Error');  // ✅ Notificación
-        this.cargandoAsignaturas = false;
-      }
-    });
   }
 
   onFileSelected(event: any) {
@@ -116,8 +92,7 @@ export class FormTareaComponent implements OnInit {
           titulo: response.titulo || '',
           descripcion: response.descripcion || '',
           fechaLimite: response.fechaLimite ? response.fechaLimite.split('T')[0] : '',
-          curso: response.curso || '',
-          asignaturaId: response.asignatura?.id || null
+          curso: response.curso || ''
         };
         this.loading = false;
         this.cdr.detectChanges();
@@ -153,11 +128,6 @@ export class FormTareaComponent implements OnInit {
     formData.append('descripcion', this.tarea.descripcion);
     formData.append('fechaLimite', this.tarea.fechaLimite);
     formData.append('curso', this.tarea.curso || '');
-    if (this.tarea.asignaturaId) {
-      formData.append('asignaturaId', this.tarea.asignaturaId.toString());
-      console.log('💾 AsignaturaId:', this.tarea.asignaturaId);
-    }
-    
     if (this.archivoSeleccionado) {
       formData.append('archivoApoyo', this.archivoSeleccionado);
     }

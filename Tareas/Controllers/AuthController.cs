@@ -75,38 +75,68 @@ namespace Tareas.Controllers.Api
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            // Verificar si el usuario ya existe
-            var existingUser = await _userManager.FindByEmailAsync(request.Email);
-            if (existingUser != null)
-                return BadRequest(new { mensaje = "El correo ya está registrado" });
-
-            // Crear usuario con ApplicationUser (incluye NombreCompleto)
-            var user = new ApplicationUser
+            try
             {
-                UserName = request.Email,
-                Email = request.Email,
-                PhoneNumber = request.Telefono,
-                EmailConfirmed = true,
-                NombreCompleto = request.Email?.Split('@')[0] ?? ""  // Nombre inicial desde email
-            };
+                // Log de entrada
+                Console.WriteLine("=== REGISTRO DE USUARIO ===");
+                Console.WriteLine($"Email: {request.Email}");
+                Console.WriteLine($"Password length: {request.Password?.Length ?? 0}");
+                Console.WriteLine($"Telefono: {request.Telefono}");
+                Console.WriteLine($"Rol: {request.Rol}");
 
-            var result = await _userManager.CreateAsync(user, request.Password);
-            if (!result.Succeeded)
-            {
-                var errores = result.Errors.Select(e => e.Description);
-                return BadRequest(new { mensaje = "Error al registrar", errores });
+                // Validar que no estén vacíos
+                if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+                {
+                    Console.WriteLine("❌ Email o contraseña vacíos");
+                    return BadRequest(new { mensaje = "Email y contraseña son requeridos" });
+                }
+
+                // Verificar si el usuario ya existe
+                var existingUser = await _userManager.FindByEmailAsync(request.Email);
+                if (existingUser != null)
+                {
+                    Console.WriteLine($"❌ Usuario ya existe: {request.Email}");
+                    return BadRequest(new { mensaje = "El correo ya está registrado" });
+                }
+
+                // Crear usuario con ApplicationUser (incluye NombreCompleto)
+                var user = new ApplicationUser
+                {
+                    UserName = request.Email,
+                    Email = request.Email,
+                    PhoneNumber = request.Telefono,
+                    EmailConfirmed = true,
+                    NombreCompleto = request.Email?.Split('@')[0] ?? ""  // Nombre inicial desde email
+                };
+
+                var result = await _userManager.CreateAsync(user, request.Password);
+                if (!result.Succeeded)
+                {
+                    // Retornar los errores de validación específicos
+                    var errores = result.Errors.Select(e => e.Description).ToList();
+                    var mensajeDetallado = string.Join(" | ", errores);
+                    Console.WriteLine($"❌ Error al crear usuario: {mensajeDetallado}");
+                    return BadRequest(new { mensaje = "La contraseña debe tener: al menos 6 caracteres, una letra minúscula y un número", detalles = mensajeDetallado });
+                }
+
+                // Asignar rol (Estudiante o Docente)
+                var rol = request.Rol ?? "Estudiante";
+
+                // Crear rol si no existe
+                if (!await _roleManager.RoleExistsAsync(rol))
+                    await _roleManager.CreateAsync(new IdentityRole(rol));
+
+                await _userManager.AddToRoleAsync(user, rol);
+
+                Console.WriteLine($"✅ Usuario registrado exitosamente: {request.Email} con rol {rol}");
+                return Ok(new { mensaje = "Usuario registrado exitosamente", email = user.Email, rol });
             }
-
-            // Asignar rol (Estudiante o Docente)
-            var rol = request.Rol ?? "Estudiante";
-
-            // Crear rol si no existe
-            if (!await _roleManager.RoleExistsAsync(rol))
-                await _roleManager.CreateAsync(new IdentityRole(rol));
-
-            await _userManager.AddToRoleAsync(user, rol);
-
-            return Ok(new { mensaje = "Usuario registrado exitosamente", email = user.Email, rol });
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Excepción en registro: {ex.Message}");
+                Console.WriteLine($"Stack: {ex.StackTrace}");
+                return BadRequest(new { mensaje = "Error interno del servidor", error = ex.Message });
+            }
         }
 
         // ==========================================

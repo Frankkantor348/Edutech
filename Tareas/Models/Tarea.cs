@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Tareas.Models
 {
@@ -33,12 +32,6 @@ namespace Tareas.Models
         public string? RutaArchivoApoyo { get; set; }
         public string? NombreArchivoApoyo { get; set; }
         public string? TipoArchivoApoyo { get; set; }
-
-        // Nueva relación con Asignatura
-        public int? AsignaturaId { get; set; }
-
-        [ForeignKey("AsignaturaId")]
-        public virtual Asignatura? Asignatura { get; set; }
 
         // Relación con entregas
         public virtual ICollection<Entrega> Entregas { get; set; } = new List<Entrega>();

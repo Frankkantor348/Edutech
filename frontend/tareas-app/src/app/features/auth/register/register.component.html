@@ -29,12 +29,59 @@
             
             <div class="mb-3">
               <label class="form-label">Contraseña *</label>
-              <input type="password" class="form-control" [(ngModel)]="password" name="password" required>
+              <div class="input-group mb-2">
+                <input 
+                  [type]="showPassword ? 'text' : 'password'"
+                  class="form-control"
+                  [(ngModel)]="password"
+                  (input)="validarPassword()"
+                  name="password"
+                  required>
+                <span 
+                  class="password-toggle"
+                  (click)="togglePassword()">
+                  <i 
+                    class="bi"
+                    [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'">
+                  </i>
+                </span>
+              </div>
+              <!-- Requisitos de contraseña -->
+              <small class="d-block mb-2" style="color: #666;">Requisitos:</small>
+              <ul class="list-unstyled small" style="font-size: 12px;">
+                <li [style.color]="hasMinLength ? '#28a745' : '#dc3545'">
+                  <i [class]="hasMinLength ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'"></i>
+                  Mínimo 6 caracteres
+                </li>
+                <li [style.color]="hasLowercase ? '#28a745' : '#dc3545'">
+                  <i [class]="hasLowercase ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'"></i>
+                  Una letra minúscula (a-z)
+                </li>
+                <li [style.color]="hasDigit ? '#28a745' : '#dc3545'">
+                  <i [class]="hasDigit ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'"></i>
+                  Un número (0-9)
+                </li>
+              </ul>
             </div>
-            
+
             <div class="mb-3">
               <label class="form-label">Confirmar Contraseña *</label>
-              <input type="password" class="form-control" [(ngModel)]="confirmPassword" name="confirmPassword" required>
+              <div class="input-group">
+                <input 
+                  [type]="showConfirmPassword ? 'text' : 'password'"
+                  class="form-control"
+                  [(ngModel)]="confirmPassword"
+                  name="confirmPassword"
+                  required>
+                <span 
+                  class="password-toggle"
+                  (click)="toggleConfirmPassword()">
+                  <i 
+                    class="bi"
+                    [ngClass]="showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'">
+                  </i>
+                </span>
+              </div>
             </div>
             
             <div class="mb-3">

@@ -13,7 +13,6 @@ namespace Tareas.Data
 
         public DbSet<Tarea> Tareas { get; set; }
         public DbSet<Entrega> Entregas { get; set; }
-       // public DbSet<Asignatura> Asignaturas { get; set; }
         public DbSet<PerfilUsuario> PerfilesUsuarios { get; set; }
         public DbSet<ApplicationUser> Users { get; set; }  // ← Agregado para acceder a los usuarios
 

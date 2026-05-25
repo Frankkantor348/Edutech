@@ -19,8 +19,10 @@ namespace Tareas
             // CONFIGURACIÓN DE SERVICIOS
             // ==========================================
 
-            var connectionString = builder.Configuration.GetConnectionString("ConexionSQL")
-                ?? throw new InvalidOperationException("Connection string 'ConexionSQL' not found.");
+            // Leer conexión desde VARIABLE DE ENTORNO (Azure App Settings)
+            var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
+                ?? builder.Configuration.GetConnectionString("ConexionSQL")
+                ?? throw new InvalidOperationException("Connection string 'DB_CONNECTION' or 'ConexionSQL' not found.");
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString, sqlOptions =>
@@ -29,7 +31,7 @@ namespace Tareas
                         maxRetryDelay: TimeSpan.FromSeconds(30),
                         errorNumbersToAdd: null)));
 
-            // CAMBIADO: Usar ApplicationUser en lugar de IdentityUser
+            // Identity con ApplicationUser
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = false;
@@ -43,9 +45,16 @@ namespace Tareas
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
-            var jwtKey = builder.Configuration["Jwt:Key"] ?? "MiClaveSecretaSuperSeguraParaJWT123456789!!!";
-            var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "TareasApp";
-            var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "TareasAppClient";
+            // JWT - Leer desde variable de entorno o configuración
+            var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") 
+                ?? builder.Configuration["Jwt:Key"] 
+                ?? "MiClaveSecretaSuperSeguraParaJWT123456789!!!";
+            var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
+                ?? builder.Configuration["Jwt:Issuer"] 
+                ?? "TareasApp";
+            var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+                ?? builder.Configuration["Jwt:Audience"] 
+                ?? "TareasAppClient";
 
             builder.Services.AddAuthentication(options =>
             {
@@ -67,15 +76,32 @@ namespace Tareas
                 };
             });
 
-            // configuración de CORS para permitir solicitudes desde Angular
+            // ==========================================
+            // CONFIGURACIÓN DE CORS PARA AZURE STORAGE
+            // ==========================================
+            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") 
+                ?? "https://edutechfrontapp.z47.web.core.windows.net";
+
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AngularPolicy", policy =>
+                options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.WithOrigins("http://localhost:4200")
-                          .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials();
+                    if (builder.Environment.IsDevelopment())
+                    {
+                        // Desarrollo: permitir Angular local
+                        policy.WithOrigins("http://localhost:4200")
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials();
+                    }
+                    else
+                    {
+                        // Producción: permitir el frontend en Azure Storage
+                        policy.WithOrigins(frontendUrl)
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials();
+                    }
                 });
             });
 
@@ -84,7 +110,7 @@ namespace Tareas
             var app = builder.Build();
 
             // ==========================================
-            // CREAR BASE DE DATOS
+            // CREAR BASE DE DATOS (si no existe)
             // ==========================================
             using (var scope = app.Services.CreateScope())
             {
@@ -93,12 +119,11 @@ namespace Tareas
             }
 
             // ==========================================
-            // INICIALIZACIÓN DE DATOS
+            // INICIALIZACIÓN DE DATOS (Roles y usuarios)
             // ==========================================
             using (var scope = app.Services.CreateScope())
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-                // CAMBIADO: Usar ApplicationUser
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
                 string[] roles = { "Docente", "Estudiante" };
@@ -111,13 +136,13 @@ namespace Tareas
                 string docenteEmail = "docente@edutech.com";
                 if (await userManager.FindByEmailAsync(docenteEmail) == null)
                 {
-                    var docente = new ApplicationUser  
+                    var docente = new ApplicationUser
                     {
                         UserName = docenteEmail,
                         Email = docenteEmail,
                         EmailConfirmed = true,
                         PhoneNumber = "3001234567",
-                        NombreCompleto = "Docente"  
+                        NombreCompleto = "Docente"
                     };
                     await userManager.CreateAsync(docente, "Docente123!");
                     await userManager.AddToRoleAsync(docente, "Docente");
@@ -126,7 +151,7 @@ namespace Tareas
                 string estudianteEmail = "estudiante@edutech.com";
                 if (await userManager.FindByEmailAsync(estudianteEmail) == null)
                 {
-                    var estudiante = new ApplicationUser 
+                    var estudiante = new ApplicationUser
                     {
                         UserName = estudianteEmail,
                         Email = estudianteEmail,
@@ -148,9 +173,10 @@ namespace Tareas
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseCors("AngularPolicy");
-            // app.UseHttpsRedirection();
+            // Usar CORS
+            app.UseCors("AllowFrontend");
 
+            // Servir archivos estáticos (si existen)
             var wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             if (!Directory.Exists(wwwrootPath))
             {
@@ -167,11 +193,12 @@ namespace Tareas
             app.UseAuthorization();
             app.MapControllers();
 
+            // Health check
             app.MapGet("/api/health", () => Results.Ok(new
             {
                 status = "OK",
                 timestamp = DateTime.UtcNow,
-                message = "EduTech API funcionando"
+                message = "EduTech API funcionando en Azure"
             })).AllowAnonymous();
 
             app.Run();

@@ -49,23 +49,6 @@
                 name="curso">
             </div>
             
-            <!-- ✅ Selector de Asignatura -->
-            <div class="mb-3">
-              <label class="form-label fw-bold">Asignatura</label>
-              <select 
-                class="form-control" 
-                [(ngModel)]="tarea.asignaturaId" 
-                name="asignaturaId">
-                <option [ngValue]="null">-- Seleccionar asignatura --</option>
-                <option *ngFor="let asig of asignaturas" [ngValue]="asig.id">
-                  {{ asig.nombre }}
-                </option>
-              </select>
-              <small class="text-muted" *ngIf="cargandoAsignaturas">Cargando asignaturas...</small>
-              <small class="text-muted" *ngIf="!cargandoAsignaturas && asignaturas.length === 0">
-                No hay asignaturas. Crea una desde el perfil o contacta al administrador.
-              </small>
-            </div>
             
             <div class="mb-3">
               <label class="form-label fw-bold"><i class="bi bi-calendar-event" style="color:#1869B7"></i> Fecha Límite *</label>

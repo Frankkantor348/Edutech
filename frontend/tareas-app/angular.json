@@ -23,6 +23,10 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets"
               }
             ],
             "styles": [
@@ -34,6 +38,7 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [],
               "budgets": [
                 {
                   "type": "initial",
