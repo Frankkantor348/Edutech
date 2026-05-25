@@ -23,6 +23,11 @@ export class RegisterComponent {
   loading: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
+  
+  // Validaciones de contraseña en tiempo real
+  hasMinLength: boolean = false;
+  hasLowercase: boolean = false;
+  hasDigit: boolean = false;
 
   onSubmit() {
     // Validaciones
@@ -36,8 +41,9 @@ export class RegisterComponent {
       return;
     }
 
-    if (this.password.length < 6) {
-      this.errorMessage = 'La contraseña debe tener al menos 6 caracteres';
+    // Validar requisitos de contraseña
+    if (!this.hasMinLength || !this.hasLowercase || !this.hasDigit) {
+      this.errorMessage = 'La contraseña debe cumplir todos los requisitos';
       return;
     }
 
@@ -62,10 +68,20 @@ export class RegisterComponent {
       },
       error: (error) => {
         console.error('Error en registro:', error);
-        this.errorMessage = error.error?.mensaje || 'Error al registrar usuario';
+        // Mostrar el mensaje de error del backend si está disponible
+        const mensajeError = error.error?.mensaje 
+          ? error.error.mensaje 
+          : 'Error al registrar usuario';
+        this.errorMessage = mensajeError;
         this.loading = false;
       }
     });
+  }
+
+  validarPassword() {
+    this.hasMinLength = this.password.length >= 6;
+    this.hasLowercase = /[a-z]/.test(this.password);
+    this.hasDigit = /[0-9]/.test(this.password);
   }
 
   showPassword: boolean = false;

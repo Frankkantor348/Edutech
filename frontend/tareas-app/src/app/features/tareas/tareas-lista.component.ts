@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -24,16 +25,12 @@ interface Tarea {
   fechaEntrega?: Date; 
   totalEntregas?: number;
   entregasCalificadas?: number;
-  asignatura?: {
-    id: number;
-    nombre: string;
-  };
 }
 
 @Component({
   selector: 'app-tareas-lista',
   standalone: true,
-  imports: [CommonModule, NavbarComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   templateUrl: './tareas-lista.component.html',
   styleUrls: ['./tareas-lista.component.css']
 })
@@ -55,26 +52,79 @@ export class TareasListaComponent implements OnInit {
   // ✅ Para archivos estáticos, usar la URL base sin /api
   apiBaseUrl: string = environment.apiUrl.replace('/api', ''); // http://localhost:5278
   filtroActual: string = '';
+  filtroCurso: string = '';
+  filtroFechaDesde: string = '';
+  filtroFechaHasta: string = '';
+  cursosDisponibles: string[] = [];
 
   ngOnInit() {
     console.log('🔵 Componente iniciado');
     console.log('📡 API URL:', environment.apiUrl);
     console.log('📁 Base URL para archivos:', this.apiBaseUrl);
     this.esDocente = this.authService.getRol() === 'Docente';
-    
+    this.cargarCursos();
+
     this.route.queryParams.subscribe(params => {
       this.filtroActual = params['filtro'] || '';
-      console.log('📋 Filtro recibido desde dashboard:', this.filtroActual);
+      this.filtroCurso = params['curso'] || '';
+      this.filtroFechaDesde = params['fechaDesde'] || '';
+      this.filtroFechaHasta = params['fechaHasta'] || '';
+      console.log('📋 Filtros recibidos:', {
+        filtro: this.filtroActual,
+        curso: this.filtroCurso,
+        fechaDesde: this.filtroFechaDesde,
+        fechaHasta: this.filtroFechaHasta
+      });
       this.cargarTareas();
     });
+  }
+
+  actualizarFiltro() {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        filtro: this.filtroActual || null,
+        curso: this.filtroCurso || null,
+        fechaDesde: this.filtroFechaDesde || null,
+        fechaHasta: this.filtroFechaHasta || null
+      },
+      queryParamsHandling: 'merge'
+    });
+    this.cargarTareas();
+  }
+
+  limpiarFiltro() {
+    this.filtroActual = '';
+    this.filtroCurso = '';
+    this.filtroFechaDesde = '';
+    this.filtroFechaHasta = '';
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        filtro: null,
+        curso: null,
+        fechaDesde: null,
+        fechaHasta: null
+      },
+      queryParamsHandling: 'merge'
+    });
+    this.cargarTareas();
   }
 
   cargarTareas() {
     console.log('🟢 Cargando tareas...');
     this.loading = true;
     this.cdr.detectChanges();
-    
-    this.http.get<Tarea[]>(`${environment.apiUrl}/TareasApi`).subscribe({
+
+    let params = new URLSearchParams();
+    if (this.filtroCurso) params.set('curso', this.filtroCurso);
+    if (this.filtroFechaDesde) params.set('fechaDesde', this.filtroFechaDesde);
+    if (this.filtroFechaHasta) params.set('fechaHasta', this.filtroFechaHasta);
+
+    const url = `${environment.apiUrl}/TareasApi${params.toString() ? '?' + params.toString() : ''}`;
+    console.log('📡 URL de tareas:', url);
+
+    this.http.get<Tarea[]>(url).subscribe({
       next: (tareas) => {
         console.log('✅ Tareas recibidas:', tareas);
         tareas.forEach(t => {
@@ -111,7 +161,7 @@ export class TareasListaComponent implements OnInit {
           this.tareasFiltradas = this.tareas.filter(t => !t.entregada && !this.isVencida(t.fechaLimite));
           break;
         case 'entregada':
-          this.tareasFiltradas = this.tareas.filter(t => t.entregada && !t.calificacion);
+          this.tareasFiltradas = this.tareas.filter(t => t.entregada);
           break;
         case 'calificada':
           this.tareasFiltradas = this.tareas.filter(t => t.calificacion !== undefined && t.calificacion !== null);
@@ -132,6 +182,12 @@ export class TareasListaComponent implements OnInit {
           break;
         case 'calificadas':
           this.tareasFiltradas = this.tareas.filter(t => t.entregasCalificadas && t.entregasCalificadas > 0);
+          break;
+        case 'estudiantes':
+          this.tareasFiltradas = this.tareas;
+          break;
+        case 'vencida':
+          this.tareasFiltradas = this.tareas.filter(t => this.isVencida(t.fechaLimite));
           break;
         default:
           this.tareasFiltradas = this.tareas;
@@ -168,6 +224,17 @@ export class TareasListaComponent implements OnInit {
     const limite = new Date(fechaLimite);
     limite.setHours(0, 0, 0, 0);
     return limite < hoy;
+  }
+
+  cargarCursos() {
+    this.http.get<string[]>(`${environment.apiUrl}/TareasApi/cursos`).subscribe({
+      next: (cursos) => {
+        this.cursosDisponibles = cursos;
+      },
+      error: (error) => {
+        console.error('❌ Error cargando cursos:', error);
+      }
+    });
   }
 
   eliminarTarea(tarea: Tarea) {

@@ -37,8 +37,8 @@
             
             <div class="mb-3">
               <label class="form-label fw-bold">Archivo de entrega *</label>
-              <input type="file" class="form-control" (change)="onFileSelected($event)" required>
-              <small class="text-muted">Formatos: PDF, DOC, DOCX, JPG, PNG, ZIP, TXT (Max 10MB)</small>
+              <input type="file" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png,.zip,.txt" (change)="onFileSelected($event)" required>
+              <small class="text-muted">Formatos: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, ZIP, TXT (Max 10MB)</small>
             </div>
             
             <div class="d-flex gap-2">

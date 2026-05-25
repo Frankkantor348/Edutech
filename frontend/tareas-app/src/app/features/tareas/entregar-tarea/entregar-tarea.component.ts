@@ -92,7 +92,7 @@ export class EntregarTareaComponent implements OnInit {
         return;
       }
       
-      const extensionesPermitidas = ['.pdf', '.doc', '.docx', '.jpg', '.png', '.zip', '.txt'];
+      const extensionesPermitidas = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.png', '.zip', '.txt'];
       const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
       if (!extensionesPermitidas.includes(extension)) {
         this.toastr.warning('Tipo de archivo no permitido', 'Advertencia');  // ✅ Notificación

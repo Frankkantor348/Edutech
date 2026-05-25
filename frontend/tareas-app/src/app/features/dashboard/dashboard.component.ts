@@ -2,11 +2,10 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth.service';
-import { AsignaturaService, Asignatura } from '../../core/services/asignatura.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -20,13 +19,19 @@ export class DashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
-  private asignaturaService = inject(AsignaturaService);
   
   // Variables para Docente
   totalTareasPublicadas: number = 0;
   totalEntregasPendientes: number = 0;
   totalEntregasCalificadas: number = 0;
+  totalEntregasRealizadas: number = 0;
+  totalEntregasNoRealizadas: number = 0;
   totalEstudiantes: number = 0;
+  cursosDisponibles: string[] = [];
+  cursoSeleccionado: string = '';
+  estudiantesMostrados: Array<{ id: string; nombreCompleto: string; email: string }> = [];
+  estudiantesTitulo: string = '';
+  estudiantesLoading: boolean = false;
   
   // Variables para Estudiante
   tareasPendientes: number = 0;
@@ -42,28 +47,44 @@ export class DashboardComponent implements OnInit {
   error: string = '';
   esDocente: boolean = false;
 
-  // Variables para filtros
-  asignaturas: Asignatura[] = [];
-  cursosDisponibles: string[] = [];
-  filtroAsignatura: number | null = null;
-  filtroCurso: string = '';
-  filtroEstado: string = '';
-  filtroFechaDesde: string = '';
-  filtroFechaHasta: string = '';
-
   ngOnInit() {
     this.esDocente = this.authService.isDocente();
-    this.cargarAsignaturas();
-    this.cargarCursos();
+    if (this.esDocente) {
+      this.cargarCursos();
+    }
     this.cargarDashboard();
   }
 
-  cargarAsignaturas() {
-    this.asignaturaService.getAsignaturas().subscribe({
-      next: (asignaturas) => {
-        this.asignaturas = asignaturas;
+  cargarDashboard() {
+    this.loading = true;
+    this.cdr.detectChanges();
+
+    const cursoQuery = this.cursoSeleccionado ? `?curso=${encodeURIComponent(this.cursoSeleccionado)}` : '';
+    this.http.get(`${environment.apiUrl}/dashboard${cursoQuery}`).subscribe({
+      next: (response: any) => {
+        if (this.esDocente) {
+          this.totalTareasPublicadas = response.totalTareasPublicadas || 0;
+          this.totalEntregasPendientes = response.totalEntregasPendientes || 0;
+          this.totalEntregasCalificadas = response.totalEntregasCalificadas || 0;
+          this.totalEntregasRealizadas = response.totalEntregasRealizadas || 0;
+          this.totalEntregasNoRealizadas = response.totalEntregasNoRealizadas || 0;
+          this.totalEstudiantes = response.totalEstudiantes || 0;
+        } else {
+          this.tareasPendientes = response.tareasPendientes || 0;
+          this.tareasEntregadas = response.tareasEntregadas || 0;
+          this.tareasCalificadas = response.tareasCalificadas || 0;
+          this.tareasVencidas = response.tareasVencidas || 0;
+        }
+
+        this.loading = false;
+        this.cdr.detectChanges();
       },
-      error: (error) => console.error('Error cargando asignaturas:', error)
+      error: (error) => {
+        console.error('❌ Error:', error);
+        this.error = 'Error al cargar el dashboard';
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -72,77 +93,76 @@ export class DashboardComponent implements OnInit {
       next: (cursos) => {
         this.cursosDisponibles = cursos;
       },
-      error: (error) => console.error('Error cargando cursos:', error)
+      error: (error) => {
+        console.error('❌ Error al cargar cursos:', error);
+      }
     });
   }
 
-  cargarDashboard() {
-  this.loading = true;
-  this.cdr.detectChanges();
-
-  let params = new HttpParams();
-  
-  // Solo agregar parámetros con valores válidos
-  if (this.filtroAsignatura !== null && this.filtroAsignatura !== undefined) {
-    params = params.set('asignaturaId', this.filtroAsignatura.toString());
-  }
-  if (this.filtroCurso && this.filtroCurso.trim() !== '') {
-    params = params.set('curso', this.filtroCurso);
-  }
-  if (this.filtroEstado && this.filtroEstado.trim() !== '') {
-    params = params.set('estado', this.filtroEstado);
-  }
-  if (this.filtroFechaDesde && this.filtroFechaDesde.trim() !== '') {
-    params = params.set('fechaDesde', this.filtroFechaDesde);
-  }
-  if (this.filtroFechaHasta && this.filtroFechaHasta.trim() !== '') {
-    params = params.set('fechaHasta', this.filtroFechaHasta);
+  actualizarCurso() {
+    this.estudiantesTitulo = '';
+    this.estudiantesMostrados = [];
+    this.cargarDashboard();
   }
 
-  console.log('📡 Parámetros enviados al backend:', params.toString());
+  exportarExcel() {
+    const curso = this.cursoSeleccionado || 'Todos';
+    const rows: string[] = [];
+    rows.push('Curso;Estado;Cantidad');
+    rows.push(`${curso};Entregaron;${this.totalEntregasRealizadas}`);
+    rows.push(`${curso};No entregaron;${this.totalEntregasNoRealizadas}`);
+    rows.push('');
+    rows.push('Nombre;Email;Estado');
 
-  this.http.get(`${environment.apiUrl}/dashboard`, { params }).subscribe({
-    next: (response: any) => {
-      console.log('Dashboard response (filtrado):', response);
-      
-      if (this.esDocente) {
-        this.totalTareasPublicadas = response.totalTareasPublicadas || 0;
-        this.totalEntregasPendientes = response.totalEntregasPendientes || 0;
-        this.totalEntregasCalificadas = response.totalEntregasCalificadas || 0;
-        this.totalEstudiantes = response.totalEstudiantes || 0;
-      } else {
-        this.tareasPendientes = response.tareasPendientes || 0;
-        this.tareasEntregadas = response.tareasEntregadas || 0;
-        this.tareasCalificadas = response.tareasCalificadas || 0;
-        this.tareasVencidas = response.tareasVencidas || 0;
-      }
-      
-      this.loading = false;
-      this.cdr.detectChanges();
-    },
-    error: (error) => {
-      console.error('❌ Error:', error);
-      this.error = 'Error al cargar el dashboard';
-      this.loading = false;
-      this.cdr.detectChanges();
+    if (this.estudiantesMostrados && this.estudiantesMostrados.length > 0) {
+      const estado = this.estudiantesTitulo.includes('no entregaron') ? 'No entregó' : 'Entregó';
+      this.estudiantesMostrados.forEach(estudiante => {
+        rows.push(`${estudiante.nombreCompleto};${estudiante.email};${estado}`);
+      });
     }
-  });
-}
-  aplicarFiltros() {
-    this.cargarDashboard();
+
+    const csv = rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `dashboard_docente_${curso.replace(/\s+/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
-  limpiarFiltros() {
-    this.filtroAsignatura = null;
-    this.filtroCurso = '';
-    this.filtroEstado = '';
-    this.filtroFechaDesde = '';
-    this.filtroFechaHasta = '';
-    this.cargarDashboard();
-  }
-
-  // Navegar a tareas con filtro
+  // Navegar a tareas
   irATareas(filtro: string) {
     this.router.navigate(['/tareas'], { queryParams: { filtro } });
+  }
+
+  mostrarEstudiantes(tipo: 'entregaron' | 'noEntregaron') {
+    this.estudiantesTitulo = tipo === 'entregaron'
+      ? 'Estudiantes que entregaron'
+      : 'Estudiantes que no entregaron';
+    this.estudiantesLoading = true;
+    this.estudiantesMostrados = [];
+    this.error = '';
+    this.cdr.detectChanges();
+
+    const queryTipo = tipo === 'entregaron' ? 'entregaron' : 'noentregaron';
+    const cursoQuery = this.cursoSeleccionado ? `&curso=${encodeURIComponent(this.cursoSeleccionado)}` : '';
+    const url = `${environment.apiUrl}/dashboard/estudiantes?tipo=${queryTipo}${cursoQuery}`;
+
+    this.http.get<Array<{ id: string; nombreCompleto: string; email: string }>>(url).subscribe({
+      next: (estudiantes) => {
+        this.estudiantesMostrados = estudiantes;
+        this.estudiantesLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar estudiantes:', error);
+        this.error = 'Error al cargar la lista de estudiantes';
+        this.estudiantesLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 }
