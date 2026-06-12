@@ -2,7 +2,9 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService, RegisterRequest } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { LoggerService } from '../../../core/services/logger.service';
+import type { RegisterRequest } from '../../../core/models/auth.model';
 
 @Component({
   selector: 'app-register',
@@ -14,6 +16,7 @@ import { AuthService, RegisterRequest } from '../../../core/services/auth.servic
 export class RegisterComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private logger = inject(LoggerService);
 
   email: string = '';
   password: string = '';
@@ -23,14 +26,14 @@ export class RegisterComponent {
   loading: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
+  showPassword: boolean = false;
+  showConfirmPassword: boolean = false;
   
-  // Validaciones de contraseña en tiempo real
   hasMinLength: boolean = false;
   hasLowercase: boolean = false;
   hasDigit: boolean = false;
 
   onSubmit() {
-    // Validaciones
     if (!this.email || !this.password) {
       this.errorMessage = 'Complete todos los campos';
       return;
@@ -41,7 +44,6 @@ export class RegisterComponent {
       return;
     }
 
-    // Validar requisitos de contraseña
     if (!this.hasMinLength || !this.hasLowercase || !this.hasDigit) {
       this.errorMessage = 'La contraseña debe cumplir todos los requisitos';
       return;
@@ -60,15 +62,14 @@ export class RegisterComponent {
 
     this.authService.register(userData).subscribe({
       next: (response) => {
-        console.log('Registro exitoso:', response);
+        this.logger.info('Registro exitoso');
         this.successMessage = response.mensaje || 'Registro exitoso. Ya puedes iniciar sesión.';
         setTimeout(() => {
           this.router.navigate(['/login']);
         }, 2000);
       },
       error: (error) => {
-        console.error('Error en registro:', error);
-        // Mostrar el mensaje de error del backend si está disponible
+        this.logger.error('Error en registro', error);
         const mensajeError = error.error?.mensaje 
           ? error.error.mensaje 
           : 'Error al registrar usuario';
@@ -83,9 +84,6 @@ export class RegisterComponent {
     this.hasLowercase = /[a-z]/.test(this.password);
     this.hasDigit = /[0-9]/.test(this.password);
   }
-
-  showPassword: boolean = false;
-  showConfirmPassword: boolean = false;
 
   togglePassword() {
     this.showPassword = !this.showPassword;

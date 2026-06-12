@@ -6,6 +6,10 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth.service';
+import { LoggerService } from '../../core/services/logger.service';
+import type { DashboardDocenteResponse, DashboardEstudianteResponse } from '../../core/models/dashboard.model';
+
+type DashboardData = DashboardDocenteResponse & DashboardEstudianteResponse;
 
 @Component({
   selector: 'app-dashboard',
@@ -19,8 +23,8 @@ export class DashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private logger = inject(LoggerService);
   
-  // Variables para Docente
   totalTareasPublicadas: number = 0;
   totalEntregasPendientes: number = 0;
   totalEntregasCalificadas: number = 0;
@@ -33,15 +37,13 @@ export class DashboardComponent implements OnInit {
   estudiantesTitulo: string = '';
   estudiantesLoading: boolean = false;
   
-  // Variables para Estudiante
   tareasPendientes: number = 0;
   tareasEntregadas: number = 0;
   tareasCalificadas: number = 0;
   tareasVencidas: number = 0;
   
-  // Variables adicionales
-  totalTareas: number = 0;  // Para el conteo de tareas filtradas
-  totalEstudiantesGlobal: number = 0;  // Estudiantes totales (no se filtran)
+  totalTareas: number = 0;
+  totalEstudiantesGlobal: number = 0;
   
   loading: boolean = true;
   error: string = '';
@@ -60,8 +62,8 @@ export class DashboardComponent implements OnInit {
     this.cdr.detectChanges();
 
     const cursoQuery = this.cursoSeleccionado ? `?curso=${encodeURIComponent(this.cursoSeleccionado)}` : '';
-    this.http.get(`${environment.apiUrl}/dashboard${cursoQuery}`).subscribe({
-      next: (response: any) => {
+    this.http.get<DashboardData>(`${environment.apiUrl}/dashboard${cursoQuery}`).subscribe({
+      next: (response) => {
         if (this.esDocente) {
           this.totalTareasPublicadas = response.totalTareasPublicadas || 0;
           this.totalEntregasPendientes = response.totalEntregasPendientes || 0;
@@ -75,12 +77,11 @@ export class DashboardComponent implements OnInit {
           this.tareasCalificadas = response.tareasCalificadas || 0;
           this.tareasVencidas = response.tareasVencidas || 0;
         }
-
         this.loading = false;
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('❌ Error:', error);
+        this.logger.error('Error al cargar dashboard', error);
         this.error = 'Error al cargar el dashboard';
         this.loading = false;
         this.cdr.detectChanges();
@@ -94,7 +95,7 @@ export class DashboardComponent implements OnInit {
         this.cursosDisponibles = cursos;
       },
       error: (error) => {
-        console.error('❌ Error al cargar cursos:', error);
+        this.logger.error('Error al cargar cursos', error);
       }
     });
   }
@@ -133,7 +134,6 @@ export class DashboardComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
-  // Navegar a tareas
   irATareas(filtro: string) {
     this.router.navigate(['/tareas'], { queryParams: { filtro } });
   }
@@ -158,7 +158,7 @@ export class DashboardComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('❌ Error al cargar estudiantes:', error);
+        this.logger.error('Error al cargar estudiantes', error);
         this.error = 'Error al cargar la lista de estudiantes';
         this.estudiantesLoading = false;
         this.cdr.detectChanges();

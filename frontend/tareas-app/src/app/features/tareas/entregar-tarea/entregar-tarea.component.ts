@@ -6,24 +6,9 @@ import { HttpClient } from '@angular/common/http';
 import { NavbarComponent } from '../../../shared/navbar/navbar.component';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
-import { ToastrService } from 'ngx-toastr';  // ✅ Importar Toastr
-
-// Definir la interfaz para la tarea
-interface TareaResponse {
-  id: number;
-  titulo: string;
-  descripcion: string;
-  fechaPublicacion: Date;
-  fechaLimite: Date;
-  colorSemaforo: string;
-  curso: string;
-  docenteId: string;
-  rutaArchivoApoyo?: string;
-  nombreArchivoApoyo?: string;
-  entregada?: boolean;
-  calificacion?: number;
-  retroalimentacion?: string;
-}
+import { LoggerService } from '../../../core/services/logger.service';
+import { ToastrService } from 'ngx-toastr';
+import type { Tarea } from '../../../core/models/tarea.model';
 
 @Component({
   selector: 'app-entregar-tarea',
@@ -38,10 +23,11 @@ export class EntregarTareaComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
-  private toastr = inject(ToastrService);  // ✅ Inyectar Toastr
+  private toastr = inject(ToastrService);
+  private logger = inject(LoggerService);
   
   tareaId: number = 0;
-  tarea: TareaResponse = {} as TareaResponse;
+  tarea: Tarea = {} as Tarea;
   comentario: string = '';
   archivoSeleccionado: File | null = null;
   loading: boolean = false;
@@ -50,43 +36,36 @@ export class EntregarTareaComponent implements OnInit {
 
   ngOnInit() {
     this.tareaId = Number(this.route.snapshot.paramMap.get('id'));
-    console.log('========== ENTREGAR TAREA ==========');
-    console.log('1. ID de tarea recibido:', this.tareaId);
+    this.logger.info(`Entregar tarea ID: ${this.tareaId}`);
     this.cargarTarea();
   }
 
   cargarTarea() {
     const url = `${environment.apiUrl}/TareasApi/${this.tareaId}`;
-    console.log('2. Solicitando URL:', url);
     
-    this.http.get<TareaResponse>(url).subscribe({
+    this.http.get<Tarea>(url).subscribe({
       next: (response) => {
-        console.log('4. ✅ Respuesta recibida del backend:');
-        console.log('5. Objeto completo:', response);
-        console.log('6. 📚 Curso:', response.curso);
-        console.log('7. 📅 Fecha límite:', response.fechaLimite);
-        console.log('8. 📌 Título:', response.titulo);
-        
+        this.logger.info('Tarea cargada para entrega');
         this.tarea = response;
         this.cdr.detectChanges();
-        console.log('9. Variable tarea actualizada');
       },
       error: (error) => {
-        console.error('❌ ERROR al cargar tarea:', error);
-        this.toastr.error('Error al cargar la tarea', 'Error');  // ✅ Notificación error
+        this.logger.error('Error al cargar tarea', error);
+        this.toastr.error('Error al cargar la tarea', 'Error');
         this.error = 'Error al cargar la tarea';
         this.cdr.detectChanges();
       }
     });
   }
 
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    console.log('📎 Archivo seleccionado:', file?.name);
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    this.logger.debug(`Archivo seleccionado: ${file?.name}`);
     
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        this.toastr.warning('El archivo no puede superar los 10MB', 'Advertencia');  // ✅ Notificación
+        this.toastr.warning('El archivo no puede superar los 10MB', 'Advertencia');
         this.error = 'El archivo no puede superar los 10MB';
         this.archivoSeleccionado = null;
         return;
@@ -95,7 +74,7 @@ export class EntregarTareaComponent implements OnInit {
       const extensionesPermitidas = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.png', '.zip', '.txt'];
       const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
       if (!extensionesPermitidas.includes(extension)) {
-        this.toastr.warning('Tipo de archivo no permitido', 'Advertencia');  // ✅ Notificación
+        this.toastr.warning('Tipo de archivo no permitido', 'Advertencia');
         this.error = 'Tipo de archivo no permitido';
         this.archivoSeleccionado = null;
         return;
@@ -103,13 +82,12 @@ export class EntregarTareaComponent implements OnInit {
       
       this.archivoSeleccionado = file;
       this.error = '';
-      console.log('✅ Archivo válido:', file.name);
     }
   }
 
   entregar() {
     if (!this.archivoSeleccionado) {
-      this.toastr.warning('Debe seleccionar un archivo', 'Advertencia');  // ✅ Notificación
+      this.toastr.warning('Debe seleccionar un archivo', 'Advertencia');
       this.error = 'Debe seleccionar un archivo';
       return;
     }
@@ -125,15 +103,16 @@ export class EntregarTareaComponent implements OnInit {
 
     this.http.post(`${environment.apiUrl}/EntregasApi`, formData).subscribe({
       next: () => {
-        this.toastr.success('Tarea entregada exitosamente', 'Éxito');  // ✅ Notificación éxito
-        this.success = '✅ Tarea entregada exitosamente';
+        this.logger.info('Tarea entregada exitosamente');
+        this.toastr.success('Tarea entregada exitosamente', 'Éxito');
+        this.success = 'Tarea entregada exitosamente';
         setTimeout(() => {
           this.router.navigate(['/tareas']);
         }, 2000);
       },
       error: (error) => {
-        console.error('Error:', error);
-        this.toastr.error(error.error?.mensaje || 'Error al entregar la tarea', 'Error');  // ✅ Notificación error
+        this.logger.error('Error al entregar', error);
+        this.toastr.error(error.error?.mensaje || 'Error al entregar la tarea', 'Error');
         this.error = error.error?.mensaje || 'Error al entregar la tarea';
         this.loading = false;
       }

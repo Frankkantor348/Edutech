@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
 import { AuthService } from '../../core/services/auth.service';
+import { LoggerService } from '../../core/services/logger.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import type { PerfilUsuario } from '../../core/models/perfil.model';
 
 @Component({
   selector: 'app-perfil',
@@ -17,8 +19,9 @@ export class PerfilComponent implements OnInit {
   private authService = inject(AuthService);
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
+  private logger = inject(LoggerService);
   
-  perfil = {
+  perfil: PerfilUsuario = {
     email: '',
     nombre: '',
     telefono: '',
@@ -37,11 +40,11 @@ export class PerfilComponent implements OnInit {
 
   cargarPerfil() {
     this.loading = true;
-    console.log('📡 Cargando perfil desde:', `${environment.apiUrl}/auth/current-user`);
+    this.logger.info('Cargando perfil...');
     
-    this.http.get(`${environment.apiUrl}/auth/current-user`).subscribe({
-      next: (response: any) => {
-        console.log('✅ Perfil recibido:', response);
+    this.http.get<PerfilUsuario>(`${environment.apiUrl}/auth/current-user`).subscribe({
+      next: (response) => {
+        this.logger.info('Perfil recibido');
         this.perfil = {
           email: response.email || '',
           nombre: response.nombre || response.email?.split('@')[0] || '',
@@ -50,10 +53,9 @@ export class PerfilComponent implements OnInit {
         };
         this.loading = false;
         this.cdr.detectChanges();
-        console.log('🔴 loading = false, vista actualizada');
       },
       error: (error) => {
-        console.error('❌ Error al cargar perfil:', error);
+        this.logger.error('Error al cargar perfil', error);
         this.errorMessage = 'Error al cargar los datos del perfil';
         this.loading = false;
         this.cdr.detectChanges();
@@ -71,16 +73,15 @@ export class PerfilComponent implements OnInit {
   }
 
   guardar() {
-    // ✅ Sin validación - permite espacios, letras, números y caracteres especiales
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.http.put(`${environment.apiUrl}/auth/actualizar-perfil`, {
+    this.http.put<{ mensaje: string }>(`${environment.apiUrl}/auth/actualizar-perfil`, {
       telefono: this.perfil.telefono,
       nombre: this.perfil.nombre || null
     }).subscribe({
-      next: (response: any) => {
+      next: (response) => {
         this.successMessage = response.mensaje || 'Perfil actualizado exitosamente';
         this.editMode = false;
         this.saving = false;
@@ -88,7 +89,7 @@ export class PerfilComponent implements OnInit {
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error:', error);
+        this.logger.error('Error al guardar perfil', error);
         this.errorMessage = error.error?.mensaje || 'Error al actualizar el perfil';
         this.saving = false;
         this.cdr.detectChanges();

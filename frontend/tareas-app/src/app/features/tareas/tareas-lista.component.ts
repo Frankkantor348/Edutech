@@ -6,26 +6,9 @@ import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth.service';
+import { LoggerService } from '../../core/services/logger.service';
 import { ToastrService } from 'ngx-toastr';
-
-interface Tarea {
-  id: number;
-  titulo: string;
-  descripcion: string;
-  fechaPublicacion: Date;
-  fechaLimite: Date;
-  colorSemaforo: string;
-  curso: string;
-  docenteId: string;
-  rutaArchivoApoyo?: string;      
-  nombreArchivoApoyo?: string; 
-  entregada?: boolean;
-  calificacion?: number;
-  retroalimentacion?: string;
-  fechaEntrega?: Date; 
-  totalEntregas?: number;
-  entregasCalificadas?: number;
-}
+import type { Tarea } from '../../core/models/tarea.model';
 
 @Component({
   selector: 'app-tareas-lista',
@@ -41,6 +24,7 @@ export class TareasListaComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
   private toastr = inject(ToastrService);
+  private logger = inject(LoggerService);
   
   tareas: Tarea[] = [];
   tareasFiltradas: Tarea[] = [];
@@ -48,9 +32,7 @@ export class TareasListaComponent implements OnInit {
   error: string = '';
   esDocente: boolean = false;
   today: Date = new Date();
-  // ✅ CORREGIDO: Usar la URL del environment para las API
-  // ✅ Para archivos estáticos, usar la URL base sin /api
-  apiBaseUrl: string = environment.apiUrl.replace('/api', ''); // http://localhost:5278
+  apiBaseUrl: string = environment.apiUrl.replace('/api', '');
   filtroActual: string = '';
   filtroCurso: string = '';
   filtroFechaDesde: string = '';
@@ -58,9 +40,7 @@ export class TareasListaComponent implements OnInit {
   cursosDisponibles: string[] = [];
 
   ngOnInit() {
-    console.log('🔵 Componente iniciado');
-    console.log('📡 API URL:', environment.apiUrl);
-    console.log('📁 Base URL para archivos:', this.apiBaseUrl);
+    this.logger.info(`Componente iniciado. API: ${environment.apiUrl}`);
     this.esDocente = this.authService.getRol() === 'Docente';
     this.cargarCursos();
 
@@ -69,12 +49,6 @@ export class TareasListaComponent implements OnInit {
       this.filtroCurso = params['curso'] || '';
       this.filtroFechaDesde = params['fechaDesde'] || '';
       this.filtroFechaHasta = params['fechaHasta'] || '';
-      console.log('📋 Filtros recibidos:', {
-        filtro: this.filtroActual,
-        curso: this.filtroCurso,
-        fechaDesde: this.filtroFechaDesde,
-        fechaHasta: this.filtroFechaHasta
-      });
       this.cargarTareas();
     });
   }
@@ -112,7 +86,7 @@ export class TareasListaComponent implements OnInit {
   }
 
   cargarTareas() {
-    console.log('🟢 Cargando tareas...');
+    this.logger.info('Cargando tareas...');
     this.loading = true;
     this.cdr.detectChanges();
 
@@ -122,24 +96,17 @@ export class TareasListaComponent implements OnInit {
     if (this.filtroFechaHasta) params.set('fechaHasta', this.filtroFechaHasta);
 
     const url = `${environment.apiUrl}/TareasApi${params.toString() ? '?' + params.toString() : ''}`;
-    console.log('📡 URL de tareas:', url);
 
     this.http.get<Tarea[]>(url).subscribe({
       next: (tareas) => {
-        console.log('✅ Tareas recibidas:', tareas);
-        tareas.forEach(t => {
-          if (t.rutaArchivoApoyo) {
-            console.log(`📎 Tarea "${t.titulo}" - Ruta: ${t.rutaArchivoApoyo}`);
-          }
-        });
+        this.logger.info(`Tareas recibidas: ${tareas.length}`);
         this.tareas = tareas;
         this.aplicarFiltro();
         this.loading = false;
         this.cdr.detectChanges();
-        console.log('🔴 loading = false, vista actualizada');
       },
       error: (error) => {
-        console.error('❌ Error:', error);
+        this.logger.error('Error al cargar tareas', error);
         this.toastr.error('Error al cargar las tareas', 'Error');
         this.error = 'Error al cargar las tareas';
         this.loading = false;
@@ -151,7 +118,7 @@ export class TareasListaComponent implements OnInit {
   aplicarFiltro() {
     if (!this.filtroActual) {
       this.tareasFiltradas = this.tareas;
-      console.log('📋 Sin filtro, mostrando todas las tareas:', this.tareasFiltradas.length);
+      this.logger.debug(`Sin filtro, mostrando ${this.tareasFiltradas.length} tareas`);
       return;
     }
 
@@ -193,28 +160,18 @@ export class TareasListaComponent implements OnInit {
           this.tareasFiltradas = this.tareas;
       }
     }
-    console.log(`📋 Filtro "${this.filtroActual}" - Mostrando ${this.tareasFiltradas.length} tareas`);
+    this.logger.debug(`Filtro "${this.filtroActual}" - ${this.tareasFiltradas.length} tareas`);
   }
 
-  // ✅ MÉTODO CORREGIDO para abrir material de apoyo
   abrirMaterial(ruta: string | undefined, nombre: string | undefined) {
-    console.log('========== DEBUG MATERIAL ==========');
-    console.log('Ruta en BD:', ruta);
-    console.log('Nombre archivo:', nombre);
-    console.log('Base URL:', this.apiBaseUrl);
-    
     if (!ruta) {
-      console.error('❌ No hay ruta de archivo');
+      this.logger.warn('No hay ruta de archivo');
       this.toastr.warning('No hay archivo disponible', 'Advertencia');
       return;
     }
     
-    // ✅ Construir URL correcta: base (sin /api) + ruta
     const url = `${this.apiBaseUrl}${ruta}`;
-    console.log('URL completa:', url);
-    console.log('====================================');
-    
-    // Abrir en nueva pestaña
+    this.logger.debug(`Abriendo material: ${url}`);
     window.open(url, '_blank');
   }
 
@@ -232,22 +189,22 @@ export class TareasListaComponent implements OnInit {
         this.cursosDisponibles = cursos;
       },
       error: (error) => {
-        console.error('❌ Error cargando cursos:', error);
+        this.logger.error('Error cargando cursos', error);
       }
     });
   }
 
   eliminarTarea(tarea: Tarea) {
     if (confirm(`¿Eliminar la tarea "${tarea.titulo}"? Esta acción no se puede deshacer. Se eliminarán también todas las entregas asociadas.`)) {
-      console.log(`🗑️ Eliminando tarea ID: ${tarea.id}`);
+      this.logger.info(`Eliminando tarea ID: ${tarea.id}`);
       this.http.delete(`${environment.apiUrl}/TareasApi/${tarea.id}`).subscribe({
         next: () => {
-          console.log('✅ Tarea eliminada exitosamente');
+          this.logger.info('Tarea eliminada exitosamente');
           this.toastr.success(`Tarea "${tarea.titulo}" eliminada`, 'Éxito');
           this.cargarTareas();
         },
         error: (error) => {
-          console.error('❌ Error al eliminar:', error);
+          this.logger.error('Error al eliminar', error);
           this.toastr.error('Error al eliminar la tarea', 'Error');
           this.error = 'Error al eliminar la tarea';
         }
@@ -268,7 +225,7 @@ export class TareasListaComponent implements OnInit {
   }
 
   verEntregas(id: number) {
-    console.log(`📋 Ver entregas de tarea ID: ${id}`);
+    this.logger.info(`Ver entregas de tarea ID: ${id}`);
     this.router.navigate([`/tareas/${id}/entregas`]);
   }
 }

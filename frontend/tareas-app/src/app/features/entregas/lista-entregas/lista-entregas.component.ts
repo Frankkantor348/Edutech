@@ -5,20 +5,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NavbarComponent } from '../../../shared/navbar/navbar.component';
 import { environment } from '../../../../environments/environment';
-
-interface Entrega {
-  id: number;
-  tareaId: number;
-  estudianteId: string;
-  nombreEstudiante: string;
-  fechaEntrega: Date;
-  comentarioEstudiante?: string;
-  rutaArchivo?: string;
-  nombreArchivoOriginal?: string;
-  calificacion?: number;
-  retroalimentacionDocente?: string;
-  fechaCalificacion?: Date;
-}
+import { LoggerService } from '../../../core/services/logger.service';
+import type { Entrega } from '../../../core/models/entrega.model';
 
 @Component({
   selector: 'app-lista-entregas',
@@ -32,6 +20,7 @@ export class ListaEntregasComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private logger = inject(LoggerService);
   
   tareaId: number = 0;
   tarea: any = {};
@@ -39,7 +28,6 @@ export class ListaEntregasComponent implements OnInit {
   loading = true;
   error = '';
   
-  // Modal de calificación
   showModal = false;
   entregaSeleccionada: Entrega | null = null;
   calificacion: number = 0;
@@ -48,7 +36,7 @@ export class ListaEntregasComponent implements OnInit {
 
   ngOnInit() {
     this.tareaId = Number(this.route.snapshot.paramMap.get('id'));
-    console.log('ID de tarea:', this.tareaId);
+    this.logger.info(`Lista entregas tarea ID: ${this.tareaId}`);
     this.cargarDatos();
   }
 
@@ -58,16 +46,14 @@ export class ListaEntregasComponent implements OnInit {
     
     this.http.get(`${environment.apiUrl}/EntregasApi/tarea/${this.tareaId}`).subscribe({
       next: (response: any) => {
-        console.log('Respuesta del backend:', response);
+        this.logger.info(`Entregas cargadas: ${response.entregas?.length || 0}`);
         this.tarea = response.tarea;
         this.entregas = response.entregas || [];
         this.loading = false;
-        this.cdr.detectChanges();  // ← Forzar actualización de la vista
-        console.log('Entregas cargadas:', this.entregas);
-        console.log('loading:', this.loading);
+        this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Error:', error);
+        this.logger.error('Error al cargar entregas', error);
         this.error = 'Error al cargar las entregas';
         this.loading = false;
         this.cdr.detectChanges();
@@ -100,13 +86,14 @@ export class ListaEntregasComponent implements OnInit {
       retroalimentacionDocente: this.retroalimentacion
     }).subscribe({
       next: () => {
+        this.logger.info('Calificación guardada');
         this.cargarDatos();
         this.cerrarModal();
         this.saving = false;
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error(error);
+        this.logger.error('Error al calificar', error);
         this.error = error.error?.mensaje || 'Error al calificar';
         this.saving = false;
         this.cdr.detectChanges();

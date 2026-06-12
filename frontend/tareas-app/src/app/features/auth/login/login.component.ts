@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { LoggerService } from '../../../core/services/logger.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, CommonModule, RouterLink], // ← Agregar RouterLink
+  imports: [FormsModule, CommonModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
@@ -16,9 +17,11 @@ export class LoginComponent {
   password: string = '';
   errorMessage: string = '';
   loading: boolean = false;
+  showPassword: boolean = false;
 
   private authService = inject(AuthService);
   private router = inject(Router);
+  private logger = inject(LoggerService);
 
   onSubmit() {
     if (!this.email || !this.password) {
@@ -31,21 +34,19 @@ export class LoginComponent {
 
     this.authService.login(this.email, this.password).subscribe({
       next: () => {
-        console.log('Login exitoso');
+        this.logger.info('Login exitoso');
         const redirectUrl = localStorage.getItem('redirectUrl') || '/dashboard';
         localStorage.removeItem('redirectUrl');
-        console.log('Redirigiendo a:', redirectUrl);
         this.router.navigate([redirectUrl]);
       },
       error: (error) => {
-        console.error('Error de login:', error);
+        this.logger.error('Error de login', error);
         this.errorMessage = 'Credenciales inválidas';
         this.loading = false;
       }
     });
   }
 
-  showPassword: boolean = false;
   togglePassword() {
     this.showPassword = !this.showPassword;
   }
